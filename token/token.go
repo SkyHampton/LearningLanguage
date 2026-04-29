@@ -1,22 +1,14 @@
 package token
 
-/*
-Language feature currently being worked on:
-1 > 2 or true;
-2 == 2 and false;
-
-Tokens:
-AND
-OR
-*/
-
 type TokenType string
 
+// A token consists of a tokenType (string), and literal text
 type Token struct {
 	Type    TokenType
 	Literal string
 }
 
+// types of tokens available
 const (
 	ILLEGAL = "ILLEGAL"
 	EOF     = "EOF"

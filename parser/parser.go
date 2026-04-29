@@ -1,15 +1,5 @@
 package parser
 
-/*
-Language feature currently being worked on:
-1 > 2 or true;
-2 == 2 and false;
-
-Tokens:
-AND
-OR
-*/
-
 import (
 	"fmt"
 	"learningLanguage/ast"

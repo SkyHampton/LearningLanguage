@@ -11,17 +11,23 @@ import (
 )
 
 func main() {
+	// if there are no args, start console REPL
 	if len(os.Args) == 1 {
 		repl.StartREPL()
 	} else {
+		// default to files as stdin/out
 		inFile := os.Stdin
 		outFile := os.Stdout
+		// iterate over args
 		index := 1
 		for index < len(os.Args) {
+			// look for args starting with -i or -o
 			switch os.Args[index] {
+			// input file
 			case "-i":
 				index++
 				inFile, _ = os.Open(os.Args[index])
+			// output file
 			case "-o":
 				index++
 				outFile, _ = os.OpenFile(os.Args[index], os.O_WRONLY|os.O_CREATE, 0600)
@@ -29,55 +35,35 @@ func main() {
 				index++
 			}
 		}
+		// execute program written in inFile, output result to outFile
 		executeProgram(inFile, outFile)
 		inFile.Close()
 		outFile.Close()
 	}
-	// line := `struct myStruct (int x, bool y);
-	// 		set myStruct.x = 123;
-	// 		set myStruct.y = false;
-	// 		print(myStruct.x);
-	// 		print(myStruct.y);`
-	// debug(line)
 }
 
 func executeProgram(in io.Reader, out io.Writer) {
+	// get program as string
 	text, err := io.ReadAll(in)
 	if err != nil {
 		panic(err)
 	}
 
+	// create lexer and parser
 	lexer := lexer.New(string(text))
 	parser := parser.New(lexer)
+	// parse program
 	program := parser.ParseProgram()
+	// evaluate AST of program, get output and errors
 	output, errors := evaluation.EvaluateProgram(program)
 
+	// if there are no errors, write program output
 	if len(errors) == 0 {
 		fmt.Fprint(out, output)
-		// fmt.Println(output)
 	} else {
+		// otherwise, write errors
 		for _, err := range errors {
 			fmt.Fprint(out, err)
-			// fmt.Println(err)
 		}
-	}
-}
-
-func debug(line string) {
-	lexer := lexer.New(line)
-	parser := parser.New(lexer)
-	program := parser.ParseProgram()
-	output, errors := evaluation.EvaluateProgram(program)
-
-	if len(parser.Errors()) > 0 {
-		for _, error := range parser.Errors() {
-			fmt.Fprintf(os.Stdout, "ERROR: %s\n", error)
-		}
-	} else if len(errors) > 0 {
-		for _, error := range errors {
-			fmt.Fprintf(os.Stdout, "ERROR: %s\n", error)
-		}
-	} else {
-		fmt.Fprintf(os.Stdout, "%s\n", output)
 	}
 }
