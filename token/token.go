@@ -44,6 +44,7 @@ const (
 	CREATE = "CREATE"
 	IF     = "IF"
 	ELSE   = "ELSE"
+	WHILE  = "WHILE"
 	BEGIN  = "BEGIN"
 	END    = "END"
 	TRUE   = "TRUE"
