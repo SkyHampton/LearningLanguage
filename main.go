@@ -56,14 +56,20 @@ func executeProgram(in io.Reader, out io.Writer) {
 	program := parser.ParseProgram()
 	// evaluate AST of program, get output and errors
 	output, errors := evaluation.EvaluateProgram(program)
+	parserErrors := parser.Errors()
 
 	// if there are no errors, write program output
-	if len(errors) == 0 {
+	if len(errors) == 0 && len(parserErrors) == 0 {
 		fmt.Fprint(out, output)
 	} else {
+		if len(parserErrors) > 0 {
+			for _, parseError := range parserErrors {
+				fmt.Fprint(out, parseError+"\n")
+			}
+		}
 		// otherwise, write errors
 		for _, err := range errors {
-			fmt.Fprint(out, err)
+			fmt.Fprint(out, err+"\n")
 		}
 	}
 }
