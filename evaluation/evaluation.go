@@ -236,22 +236,90 @@ func evaluatePrefixExp(expression *ast.PrefixExpression) Data {
 func evaluateInfixExp(expression *ast.InfixExpression) Data {
 	leftValue := evaluateExpression(expression.Left)
 	rightValue := evaluateExpression(expression.Right)
-	if leftValue.dataType != rightValue.dataType {
-		errors = append(errors, "Mismatching datatypes error")
-		return Data{}
-	}
 	var retValue Data
 
 	switch expression.Operator {
 	case "+":
-		retValue.dataType = INTTYPE
-		retValue.intValue = leftValue.intValue + rightValue.intValue
+		if leftValue.dataType == FLOATTYPE || rightValue.dataType == FLOATTYPE {
+			retValue.dataType = FLOATTYPE
+		}
+
+		var left float64
+		switch leftValue.dataType {
+		case INTTYPE:
+			left += float64(leftValue.intValue)
+		case FLOATTYPE:
+			left += leftValue.floatValue
+		}
+
+		var right float64
+		switch rightValue.dataType {
+		case INTTYPE:
+			right += float64(rightValue.intValue)
+		case FLOATTYPE:
+			right += rightValue.floatValue
+		}
+
+		if retValue.dataType != FLOATTYPE {
+			retValue.intValue = int64(left + right)
+		} else {
+			retValue.floatValue = left + right
+		}
+
 	case "-":
-		retValue.dataType = INTTYPE
-		retValue.intValue = leftValue.intValue - rightValue.intValue
+		if leftValue.dataType == FLOATTYPE || rightValue.dataType == FLOATTYPE {
+			retValue.dataType = FLOATTYPE
+		}
+
+		var left float64
+		switch leftValue.dataType {
+		case INTTYPE:
+			left += float64(leftValue.intValue)
+		case FLOATTYPE:
+			left += leftValue.floatValue
+		}
+
+		var right float64
+		switch rightValue.dataType {
+		case INTTYPE:
+			right += float64(rightValue.intValue)
+		case FLOATTYPE:
+			right += rightValue.floatValue
+		}
+
+		if retValue.dataType != FLOATTYPE {
+			retValue.intValue = int64(left - right)
+		} else {
+			retValue.floatValue = left - right
+		}
+
 	case "*":
-		retValue.dataType = INTTYPE
-		retValue.intValue = leftValue.intValue * rightValue.intValue
+		if leftValue.dataType == FLOATTYPE || rightValue.dataType == FLOATTYPE {
+			retValue.dataType = FLOATTYPE
+		}
+
+		var left float64
+		switch leftValue.dataType {
+		case INTTYPE:
+			left += float64(leftValue.intValue)
+		case FLOATTYPE:
+			left += leftValue.floatValue
+		}
+
+		var right float64
+		switch rightValue.dataType {
+		case INTTYPE:
+			right += float64(rightValue.intValue)
+		case FLOATTYPE:
+			right += rightValue.floatValue
+		}
+
+		if retValue.dataType != FLOATTYPE {
+			retValue.intValue = int64(left * right)
+		} else {
+			retValue.floatValue = left * right
+		}
+
 	case "/":
 		retValue.dataType = INTTYPE
 		retValue.intValue = leftValue.intValue / rightValue.intValue
@@ -262,6 +330,10 @@ func evaluateInfixExp(expression *ast.InfixExpression) Data {
 			retValue.boolValue = leftValue.boolValue == rightValue.boolValue
 		case INTTYPE:
 			retValue.boolValue = leftValue.intValue == rightValue.intValue
+		case FLOATTYPE:
+			retValue.boolValue = leftValue.floatValue == rightValue.floatValue
+		case STRINGTYPE:
+			retValue.boolValue = leftValue.stringValue == rightValue.stringValue
 		}
 	case "!=":
 		retValue.dataType = BOOLTYPE
@@ -270,32 +342,36 @@ func evaluateInfixExp(expression *ast.InfixExpression) Data {
 			retValue.boolValue = leftValue.boolValue != rightValue.boolValue
 		case INTTYPE:
 			retValue.boolValue = leftValue.intValue != rightValue.intValue
+		case FLOATTYPE:
+			retValue.boolValue = leftValue.floatValue != rightValue.floatValue
+		case STRINGTYPE:
+			retValue.boolValue = leftValue.stringValue != rightValue.stringValue
 		}
 	case ">":
 		retValue.dataType = BOOLTYPE
-		if leftValue.dataType != INTTYPE && rightValue.dataType != INTTYPE {
-			errors = append(errors, "Cannot perform perform quanitative comparisons with non-integers.")
+		if leftValue.dataType != INTTYPE || leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE || rightValue.dataType != FLOATTYPE {
+			errors = append(errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue > rightValue.intValue
 	case ">=":
 		retValue.dataType = BOOLTYPE
-		if leftValue.dataType != INTTYPE && rightValue.dataType != INTTYPE {
-			errors = append(errors, "Cannot perform perform quanitative comparisons with non-integers.")
+		if leftValue.dataType != INTTYPE || leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE || rightValue.dataType != FLOATTYPE {
+			errors = append(errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue >= rightValue.intValue
 	case "<":
 		retValue.dataType = BOOLTYPE
-		if leftValue.dataType != INTTYPE && rightValue.dataType != INTTYPE {
-			errors = append(errors, "Cannot perform perform quanitative comparisons with non-integers.")
+		if leftValue.dataType != INTTYPE || leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE || rightValue.dataType != FLOATTYPE {
+			errors = append(errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue < rightValue.intValue
 	case "<=":
 		retValue.dataType = BOOLTYPE
-		if leftValue.dataType != INTTYPE && rightValue.dataType != INTTYPE {
-			errors = append(errors, "Cannot perform perform quanitative comparisons with non-integers.")
+		if leftValue.dataType != INTTYPE || leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE || rightValue.dataType != FLOATTYPE {
+			errors = append(errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue <= rightValue.intValue
