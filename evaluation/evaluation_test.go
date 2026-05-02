@@ -45,6 +45,24 @@ func TestIfEval(test *testing.T) {
 	}
 }
 
+func TestWhileEval(test *testing.T) {
+	input := `create int x; set x = 0; while (x < 10) begin; print(x); set x = x + 1; end;`
+	l := lexer.New(input)
+	p := parser.New(l)
+	program := p.ParseProgram()
+
+	output, errors := EvaluateProgram(program)
+	if len(errors) != 0 {
+		test.Fatalf("Errors were found: %v", errors)
+	}
+
+	output = strings.TrimSpace(output)
+
+	if output != "0\n1\n2\n3\n4\n5\n6\n7\n8\n9" {
+		test.Fatalf("Incorrect variable value, expected 0123456789, got %s", output)
+	}
+}
+
 func TestStructEval(test *testing.T) {
 	input := `struct myStruct (int x, bool y);
 				set myStruct.x = 123;

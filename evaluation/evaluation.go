@@ -67,6 +67,11 @@ func evaluateStatement(statement ast.Statement) string {
 		output = evaluateIfStatement(ifStmt)
 	}
 
+	whileStmt, ok := statement.(*ast.WhileStatement)
+	if ok {
+		output = evaluateWhileStatement(whileStmt)
+	}
+
 	structStmt, ok := statement.(*ast.StructStatement)
 	if ok {
 		output = evaluateStructStatement(structStmt)
@@ -149,6 +154,24 @@ func evaluateIfStatement(statement *ast.IfStatement) string {
 			for _, stmt := range statement.Else {
 				ret += evaluateStatement(stmt)
 			}
+		}
+	}
+
+	return ret
+}
+
+func evaluateWhileStatement(statement *ast.WhileStatement) string {
+	ret := ""
+	conditionData := evaluateExpression(statement.Condition)
+	if conditionData.dataType != BOOLTYPE {
+		errors = append(errors, "Cannot use non-boolean expression in while statement condition.")
+		return ""
+	} else {
+		for conditionData.boolValue {
+			for _, stmt := range statement.LoopStatements {
+				ret += evaluateStatement(stmt)
+			}
+			conditionData = evaluateExpression(statement.Condition)
 		}
 	}
 
