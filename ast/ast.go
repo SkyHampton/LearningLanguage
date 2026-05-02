@@ -90,8 +90,8 @@ func (es *ExpressionStatement) String() string {
 type IfStatement struct {
 	Token     token.Token
 	Condition Expression
-	IfTrue    Statement
-	Else      Statement
+	IfTrue    []Statement
+	Else      []Statement
 }
 
 func (is *IfStatement) StatementNode()       {}
@@ -102,9 +102,34 @@ func (is *IfStatement) String() string {
 	out.WriteString("if (")
 	out.WriteString(is.Condition.String())
 	out.WriteString("):\n")
-	out.WriteString(is.IfTrue.String())
+	for _, stmt := range is.IfTrue {
+		out.WriteString(stmt.String())
+	}
 	out.WriteString("\nelse:\n")
-	out.WriteString(is.Else.String())
+	for _, stmt := range is.IfTrue {
+		out.WriteString(stmt.String())
+	}
+
+	return out.String()
+}
+
+type WhileStatement struct {
+	Token          token.Token
+	Condition      Expression
+	LoopStatements []Statement
+}
+
+func (ws *WhileStatement) StatementNode()       {}
+func (ws *WhileStatement) TokenLiteral() string { return ws.Token.Literal }
+func (ws *WhileStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("while (")
+	out.WriteString(ws.Condition.String())
+	out.WriteString("):\n")
+	for _, stmt := range ws.LoopStatements {
+		out.WriteString(stmt.String())
+	}
 
 	return out.String()
 }

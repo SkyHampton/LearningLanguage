@@ -189,14 +189,14 @@ func TestIfStatement(t *testing.T) {
 		t.Fatalf("stmt.Condition is not ast.BooleanLiteral. got=%T", stmt.Condition)
 	}
 
-	ifTrue, ok := stmt.IfTrue.(*ast.SetStatement)
+	ifTrue, ok := stmt.IfTrue[0].(*ast.SetStatement)
 	if !ok {
-		t.Fatalf("stmt.IfTrue is not ast.SetStatement. got=%T", stmt.IfTrue)
+		t.Fatalf("stmt.IfTrue is not ast.SetStatement. got=%T", stmt.IfTrue[0])
 	}
 
-	els, ok := stmt.Else.(*ast.SetStatement)
+	els, ok := stmt.Else[0].(*ast.SetStatement)
 	if !ok {
-		t.Fatalf("stmt.Else is not ast.SetStatement. got=%T", stmt.Else)
+		t.Fatalf("stmt.Else is not ast.SetStatement. got=%T", stmt.Else[0])
 	}
 
 	if !cond.Value {
@@ -224,6 +224,44 @@ func testIfSetStatement(t *testing.T, stmt *ast.SetStatement, name string, value
 	if expression.Value != value {
 		t.Fatalf("expression.Value is not 1. got=%d", expression.Value)
 		return
+	}
+}
+
+func TestWhileStatement(t *testing.T) {
+	input := `while (true) begin; print("Hello World"); end;`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program has not enough statements. got=%d",
+			len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.WhileStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.IfStatement. got=%T",
+			program.Statements[0])
+	}
+
+	if stmt.TokenLiteral() != "while" {
+		t.Errorf("stmt.TokenLiteral not while. got=%s", stmt.TokenLiteral())
+	}
+
+	cond, ok := stmt.Condition.(*ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("stmt.Condition is not ast.BooleanLiteral. got=%T", stmt.Condition)
+	}
+
+	_, ok = stmt.LoopStatements[0].(*ast.PrintStatement)
+	if !ok {
+		t.Fatalf("stmt.IfTrue is not ast.PrintStatement. got=%T", stmt.LoopStatements[0])
+	}
+
+	if !cond.Value {
+		t.Fatalf("cond.Value is not true. got=%t", cond.Value)
 	}
 }
 

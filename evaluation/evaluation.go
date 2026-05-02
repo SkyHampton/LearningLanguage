@@ -135,17 +135,24 @@ func evaluateStructStatement(statement *ast.StructStatement) string {
 }
 
 func evaluateIfStatement(statement *ast.IfStatement) string {
+	ret := ""
 	conditionData := evaluateExpression(statement.Condition)
 	if conditionData.dataType != BOOLTYPE {
 		errors = append(errors, "Cannot use non-boolean expression in if statement condition.")
 		return ""
 	} else {
 		if conditionData.boolValue {
-			return evaluateStatement(statement.IfTrue)
+			for _, stmt := range statement.IfTrue {
+				ret += evaluateStatement(stmt)
+			}
 		} else {
-			return evaluateStatement(statement.Else)
+			for _, stmt := range statement.Else {
+				ret += evaluateStatement(stmt)
+			}
 		}
 	}
+
+	return ret
 }
 
 func evaluateExpression(expression ast.Expression) Data {
@@ -349,28 +356,28 @@ func evaluateInfixExp(expression *ast.InfixExpression) Data {
 		}
 	case ">":
 		retValue.dataType = BOOLTYPE
-		if leftValue.dataType != INTTYPE || leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE || rightValue.dataType != FLOATTYPE {
+		if leftValue.dataType != INTTYPE && leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE && rightValue.dataType != FLOATTYPE {
 			errors = append(errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue > rightValue.intValue
 	case ">=":
 		retValue.dataType = BOOLTYPE
-		if leftValue.dataType != INTTYPE || leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE || rightValue.dataType != FLOATTYPE {
+		if leftValue.dataType != INTTYPE && leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE && rightValue.dataType != FLOATTYPE {
 			errors = append(errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue >= rightValue.intValue
 	case "<":
 		retValue.dataType = BOOLTYPE
-		if leftValue.dataType != INTTYPE || leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE || rightValue.dataType != FLOATTYPE {
+		if leftValue.dataType != INTTYPE && leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE && rightValue.dataType != FLOATTYPE {
 			errors = append(errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue < rightValue.intValue
 	case "<=":
 		retValue.dataType = BOOLTYPE
-		if leftValue.dataType != INTTYPE || leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE || rightValue.dataType != FLOATTYPE {
+		if leftValue.dataType != INTTYPE && leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE && rightValue.dataType != FLOATTYPE {
 			errors = append(errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
 			return Data{}
 		}

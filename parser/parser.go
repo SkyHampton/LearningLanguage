@@ -145,6 +145,12 @@ func (p *Parser) parseStatement() ast.Statement {
 			return nil
 		}
 		return stmt
+	case token.WHILE:
+		stmt := p.parseWhileStatement()
+		if stmt == nil {
+			return nil
+		}
+		return stmt
 	case token.STRUCT:
 		stmt := p.parseStructStatement()
 		if stmt == nil {
@@ -300,7 +306,7 @@ func (p *Parser) parseIfStatement() *ast.IfStatement {
 
 	for p.peekToken.Type != token.END {
 		p.nextToken()
-		statement.IfTrue = p.parseStatement()
+		statement.IfTrue = append(statement.IfTrue, p.parseStatement())
 		if p.peekToken.Type == token.ELSE {
 			p.errors = append(p.errors, "ELSE found before END;")
 			return nil
@@ -325,9 +331,15 @@ func (p *Parser) parseIfStatement() *ast.IfStatement {
 		if !p.checkNextToken(token.SEMICOLON) {
 			return nil
 		}
-		p.nextToken()
 
-		statement.Else = p.parseStatement()
+		for p.peekToken.Type != token.END {
+			p.nextToken()
+			statement.Else = append(statement.Else, p.parseStatement())
+			if p.peekToken.Type == token.EOF {
+				p.errors = append(p.errors, "Missing END Token in if statement.")
+				return nil
+			}
+		}
 
 		if !p.checkNextToken(token.END) {
 			return nil
@@ -337,6 +349,48 @@ func (p *Parser) parseIfStatement() *ast.IfStatement {
 		}
 		return statement
 	}
+}
+
+func (p *Parser) parseWhileStatement() *ast.WhileStatement {
+	statement := &ast.WhileStatement{Token: p.curToken}
+
+	if !p.checkNextToken(token.LPAREN) {
+		return nil
+	}
+
+	p.nextToken()
+	statement.Condition = p.parseExpression(LOWEST)
+
+	if !p.checkNextToken(token.RPAEREN) {
+		return nil
+	}
+
+	if !p.checkNextToken(token.BEGIN) {
+		return nil
+	}
+
+	if !p.checkNextToken(token.SEMICOLON) {
+		return nil
+	}
+
+	for p.peekToken.Type != token.END {
+		p.nextToken()
+		statement.LoopStatements = append(statement.LoopStatements, p.parseStatement())
+		if p.peekToken.Type == token.EOF {
+			p.errors = append(p.errors, "Missing END on while loop.")
+			return nil
+		}
+	}
+
+	if !p.checkNextToken(token.END) {
+		return nil
+	}
+
+	if !p.checkNextToken(token.SEMICOLON) {
+		return nil
+	}
+
+	return statement
 }
 
 func (p *Parser) parseStructStatement() *ast.StructStatement {
