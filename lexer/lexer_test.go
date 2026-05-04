@@ -281,12 +281,16 @@ func TestPrint(t *testing.T) {
 }
 
 func TestWhile(t *testing.T) {
-	input := `while`
+	input := `while count from to by`
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
 	}{
 		{token.WHILE, "while"},
+		{token.COUNT, "count"},
+		{token.FROM, "from"},
+		{token.TO, "to"},
+		{token.BY, "by"},
 	}
 
 	l := New(input)
