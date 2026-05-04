@@ -52,6 +52,10 @@ func TestWhileEval(test *testing.T) {
 	program := p.ParseProgram()
 
 	output, errors := EvaluateProgram(program)
+	parserErrors := p.Errors()
+	if len(parserErrors) != 0 {
+		test.Fatalf("Errors were found: %v", parserErrors)
+	}
 	if len(errors) != 0 {
 		test.Fatalf("Errors were found: %v", errors)
 	}
@@ -60,6 +64,28 @@ func TestWhileEval(test *testing.T) {
 
 	if output != "0\n1\n2\n3\n4\n5\n6\n7\n8\n9" {
 		test.Fatalf("Incorrect variable value, expected 0123456789, got %s", output)
+	}
+}
+
+func TestCountEval(test *testing.T) {
+	input := `count i from 1 to 10 begin; print(i); end;`
+	l := lexer.New(input)
+	p := parser.New(l)
+	program := p.ParseProgram()
+
+	output, errors := EvaluateProgram(program)
+	parserErrors := p.Errors()
+	if len(parserErrors) != 0 {
+		test.Fatalf("Errors were found: %v", parserErrors)
+	}
+	if len(errors) != 0 {
+		test.Fatalf("Errors were found: %v", errors)
+	}
+
+	output = strings.TrimSpace(output)
+
+	if output != "1\n2\n3\n4\n5\n6\n7\n8\n9\n10" {
+		test.Fatalf("Incorrect variable value, expected 12345678910, got %s", output)
 	}
 }
 

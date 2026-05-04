@@ -72,6 +72,11 @@ func evaluateStatement(statement ast.Statement) string {
 		output = evaluateWhileStatement(whileStmt)
 	}
 
+	countStmt, ok := statement.(*ast.CountStatement)
+	if ok {
+		output = evaluateCountStatement(countStmt)
+	}
+
 	structStmt, ok := statement.(*ast.StructStatement)
 	if ok {
 		output = evaluateStructStatement(structStmt)
@@ -173,6 +178,30 @@ func evaluateWhileStatement(statement *ast.WhileStatement) string {
 			}
 			conditionData = evaluateExpression(statement.Condition)
 		}
+	}
+
+	return ret
+}
+
+func evaluateCountStatement(statement *ast.CountStatement) string {
+	ret := ""
+	fromValue := evaluateExpression(statement.From)
+	toValue := evaluateExpression(statement.To)
+	byValue := evaluateExpression(statement.By)
+	if fromValue.dataType != INTTYPE || toValue.dataType != INTTYPE || byValue.dataType != INTTYPE {
+		errors = append(errors, "Cannot use non-integer values in counting statement from, to, or by.")
+		return ""
+	}
+
+	counterName := statement.Counter.Value
+	variableMap[counterName] = fromValue
+	for variableMap[counterName].intValue <= toValue.intValue {
+		for _, stmt := range statement.LoopStatements {
+			ret += evaluateStatement(stmt)
+		}
+		tempData := variableMap[counterName]
+		tempData.intValue += byValue.intValue
+		variableMap[counterName] = tempData
 	}
 
 	return ret
