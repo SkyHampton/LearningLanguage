@@ -300,7 +300,7 @@ func (p *Parser) parseIfStatement() *ast.IfStatement {
 	p.nextToken()
 	statement.Condition = p.parseExpression(LOWEST)
 
-	if !p.checkNextToken(token.RPAEREN) {
+	if !p.checkNextToken(token.RPAREN) {
 		return nil
 	}
 	if !p.checkNextToken(token.BEGIN) {
@@ -367,7 +367,7 @@ func (p *Parser) parseWhileStatement() *ast.WhileStatement {
 	p.nextToken()
 	statement.Condition = p.parseExpression(LOWEST)
 
-	if !p.checkNextToken(token.RPAEREN) {
+	if !p.checkNextToken(token.RPAREN) {
 		return nil
 	}
 
@@ -510,7 +510,7 @@ func (p *Parser) parseStructStatement() *ast.StructStatement {
 		ident = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal, DataType: datatype}
 		statement.Attributes = append(statement.Attributes, *ident)
 	}
-	if !p.checkNextToken(token.RPAEREN) {
+	if !p.checkNextToken(token.RPAREN) {
 		return nil
 	}
 
@@ -565,7 +565,7 @@ func (p *Parser) parsePrintStatement() *ast.PrintStatement {
 	p.nextToken()
 	statement.Value = p.parseExpression(LOWEST)
 
-	if !p.checkNextToken(token.RPAEREN) {
+	if !p.checkNextToken(token.RPAREN) {
 		return nil
 	}
 

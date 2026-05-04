@@ -31,7 +31,7 @@ const (
 	NOT = "NOT"
 
 	LPAREN    = "LPAREN"
-	RPAEREN   = "RPAREN"
+	RPAREN    = "RPAREN"
 	SEMICOLON = "SEMICOLON"
 	COLON     = "COLON"
 	DOT       = "DOT"

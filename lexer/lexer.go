@@ -112,7 +112,7 @@ func (l *Lexer) NextToken() token.Token {
 		case '(':
 			tok = newToken(token.LPAREN, literal)
 		case ')':
-			tok = newToken(token.RPAEREN, literal)
+			tok = newToken(token.RPAREN, literal)
 		case '[':
 			tok = newToken(token.LBRACKET, literal)
 		case ']':
