@@ -163,6 +163,12 @@ func (p *Parser) parseStatement() ast.Statement {
 			return nil
 		}
 		return stmt
+	case token.COUNT:
+		stmt := p.parseCountStatement()
+		if stmt == nil {
+			return nil
+		}
+		return stmt
 
 	default:
 		stmt := p.parseExpressionStatement()
@@ -363,6 +369,65 @@ func (p *Parser) parseWhileStatement() *ast.WhileStatement {
 
 	if !p.checkNextToken(token.RPAEREN) {
 		return nil
+	}
+
+	if !p.checkNextToken(token.BEGIN) {
+		return nil
+	}
+
+	if !p.checkNextToken(token.SEMICOLON) {
+		return nil
+	}
+
+	for p.peekToken.Type != token.END {
+		p.nextToken()
+		statement.LoopStatements = append(statement.LoopStatements, p.parseStatement())
+		if p.peekToken.Type == token.EOF {
+			p.errors = append(p.errors, "Missing END on while loop.")
+			return nil
+		}
+	}
+
+	if !p.checkNextToken(token.END) {
+		return nil
+	}
+
+	if !p.checkNextToken(token.SEMICOLON) {
+		return nil
+	}
+
+	return statement
+}
+
+func (p *Parser) parseCountStatement() *ast.CountStatement {
+	statement := &ast.CountStatement{Token: p.curToken}
+
+	if !p.checkNextToken(token.IDENT) {
+		return nil
+	}
+
+	statement.Counter = ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+
+	if !p.checkNextToken(token.FROM) {
+		return nil
+	}
+
+	p.nextToken()
+	statement.From = p.parseExpression(LOWEST)
+
+	if !p.checkNextToken(token.TO) {
+		return nil
+	}
+
+	p.nextToken()
+	statement.To = p.parseExpression(LOWEST)
+
+	if p.peekToken.Type != token.BY {
+		statement.By = &ast.IntegerLiteral{Token: token.Token{Type: token.NUMBER, Literal: "1"}, Value: 1}
+	} else {
+		p.nextToken()
+		p.nextToken()
+		statement.By = p.parseExpression(LOWEST)
 	}
 
 	if !p.checkNextToken(token.BEGIN) {

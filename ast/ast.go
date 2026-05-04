@@ -134,6 +134,36 @@ func (ws *WhileStatement) String() string {
 	return out.String()
 }
 
+type CountStatement struct {
+	Token          token.Token
+	Counter        Identifier
+	From           Expression
+	To             Expression
+	By             Expression
+	LoopStatements []Statement
+}
+
+func (cs *CountStatement) StatementNode()       {}
+func (cs *CountStatement) TokenLiteral() string { return cs.Token.Literal }
+func (cs *CountStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("count ")
+	out.WriteString(cs.Counter.Value)
+	out.WriteString(" from ")
+	out.WriteString(cs.From.String())
+	out.WriteString(" to ")
+	out.WriteString(cs.To.String())
+	out.WriteString(" by ")
+	out.WriteString(cs.By.String())
+	out.WriteString(":\n")
+	for _, stmt := range cs.LoopStatements {
+		out.WriteString(stmt.String())
+	}
+
+	return out.String()
+}
+
 type StructStatement struct {
 	Token       token.Token
 	StructIdent Identifier

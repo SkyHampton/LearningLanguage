@@ -242,7 +242,7 @@ func TestWhileStatement(t *testing.T) {
 
 	stmt, ok := program.Statements[0].(*ast.WhileStatement)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.IfStatement. got=%T",
+		t.Fatalf("program.Statements[0] is not ast.WhileStatement. got=%T",
 			program.Statements[0])
 	}
 
@@ -257,12 +257,80 @@ func TestWhileStatement(t *testing.T) {
 
 	_, ok = stmt.LoopStatements[0].(*ast.PrintStatement)
 	if !ok {
-		t.Fatalf("stmt.IfTrue is not ast.PrintStatement. got=%T", stmt.LoopStatements[0])
+		t.Fatalf("stmt.LoopStatements[0] is not ast.PrintStatement. got=%T", stmt.LoopStatements[0])
 	}
 
 	if !cond.Value {
 		t.Fatalf("cond.Value is not true. got=%t", cond.Value)
 	}
+}
+
+func TestCountStatement(t *testing.T) {
+	input := `count i from 1 to 10 begin; print(i); end;`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program has not enough statements. got=%d",
+			len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.CountStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.CountStatement. got=%T",
+			program.Statements[0])
+	}
+
+	if stmt.TokenLiteral() != "count" {
+		t.Errorf("stmt.TokenLiteral not while. got=%s", stmt.TokenLiteral())
+	}
+
+	if stmt.Counter.Value != "i" {
+		t.Errorf("stnt.Counter.Value not i, got=%s", stmt.Counter.Value)
+	}
+
+	from, ok := stmt.From.(*ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("stmt.From is not ast.IntegerLiteral. got=%T",
+			stmt.From)
+	}
+
+	if from.Value != 1 {
+		t.Fatalf("from.Value is not 1, got %d", from.Value)
+	}
+
+	to, ok := stmt.To.(*ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("stmt.To is not ast.IntegerLiteral. got=%T",
+			stmt.From)
+	}
+
+	if to.Value != 10 {
+		t.Fatalf("to.Value is not 10, got %d", to.Value)
+	}
+
+	by, ok := stmt.By.(*ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("stmt.From is not ast.IntegerLiteral. got=%T",
+			stmt.From)
+	}
+
+	if by.Value != 1 {
+		t.Fatalf("by.Value is not 1, got %d", by.Value)
+	}
+
+	if from.Value != 1 {
+		t.Fatalf("from.Value is not 1, got %d", from.Value)
+	}
+
+	_, ok = stmt.LoopStatements[0].(*ast.PrintStatement)
+	if !ok {
+		t.Fatalf("stmt.LoopStatements[0] is not ast.PrintStatement. got=%T", stmt.LoopStatements[0])
+	}
+
 }
 
 func TestStructStatement(t *testing.T) {
