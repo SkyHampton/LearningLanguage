@@ -380,8 +380,31 @@ func evaluateInfixExp(expression *ast.InfixExpression) Data {
 		}
 
 	case "/":
-		retValue.dataType = INTTYPE
-		retValue.intValue = leftValue.intValue / rightValue.intValue
+		if leftValue.dataType == FLOATTYPE || rightValue.dataType == FLOATTYPE {
+			retValue.dataType = FLOATTYPE
+		}
+
+		var left float64
+		switch leftValue.dataType {
+		case INTTYPE:
+			left += float64(leftValue.intValue)
+		case FLOATTYPE:
+			left += leftValue.floatValue
+		}
+
+		var right float64
+		switch rightValue.dataType {
+		case INTTYPE:
+			right += float64(rightValue.intValue)
+		case FLOATTYPE:
+			right += rightValue.floatValue
+		}
+
+		if retValue.dataType != FLOATTYPE {
+			retValue.intValue = int64(left / right)
+		} else {
+			retValue.floatValue = left / right
+		}
 	case "==":
 		retValue.dataType = BOOLTYPE
 		switch leftValue.dataType {
