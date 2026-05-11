@@ -12,7 +12,8 @@ var keywords = []string{
 	"false", "struct", "float",
 	"string", "print", "or",
 	"and", "while", "count",
-	"from", "to", "by"}
+	"from", "to", "by",
+	"list", "len", "append"}
 
 type Lexer struct {
 	input string
@@ -240,6 +241,12 @@ func createKeyword(str string) token.Token {
 		tok = newToken(token.TO, str)
 	case "by":
 		tok = newToken(token.BY, str)
+	case "list":
+		tok = newToken(token.LIST, str)
+	case "append":
+		tok = newToken(token.APPEND, str)
+	case "len":
+		tok = newToken(token.LEN, str)
 	}
 	return tok
 }
