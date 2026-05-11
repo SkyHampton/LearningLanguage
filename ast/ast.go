@@ -200,17 +200,57 @@ func (ps *PrintStatement) String() string {
 	return "Print(" + ps.Value.String() + ")"
 }
 
+type AppendStatement struct {
+	Token token.Token
+	List  Identifier
+	Value Expression
+}
+
+func (as *AppendStatement) StatementNode()       {}
+func (as *AppendStatement) TokenLiteral() string { return as.Token.Literal }
+func (as *AppendStatement) String() string {
+	return fmt.Sprintf("Append %s to list %s", as.Value.String(), as.List.String())
+}
+
+type LengthStatement struct {
+	Token token.Token
+	List  Identifier
+}
+
+func (ls *LengthStatement) StatementNode()       {}
+func (ls *LengthStatement) TokenLiteral() string { return ls.Token.Literal }
+func (ls *LengthStatement) String() string {
+	return fmt.Sprintf("len(%s)", ls.List.String())
+}
+
 type Identifier struct {
 	Token     token.Token
 	Value     string
 	DataType  string
 	Attribute string
+	IsList    bool
+	Index     Expression
 }
 
 func (i *Identifier) ExpressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
 func (i *Identifier) String() string {
-	return fmt.Sprintf("Name: %s, DataType: %s", i.Value, i.DataType)
+	var out bytes.Buffer
+
+	if i.IsList {
+		out.WriteString("List ")
+	}
+
+	if i.Attribute != "" {
+		out.WriteString(fmt.Sprintf("Variable %s.%s", i.Value, i.Attribute))
+	} else {
+		out.WriteString(fmt.Sprintf("Variable %s", i.Value))
+	}
+
+	if i.Index != nil {
+		out.WriteString(fmt.Sprintf("[%s] ", i.Index.String()))
+	}
+	return out.String()
 }
 
 type IntegerLiteral struct {
@@ -248,6 +288,23 @@ type StringLiteral struct {
 func (sl *StringLiteral) ExpressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
 func (sl *StringLiteral) String() string       { return sl.Token.Literal }
+
+type ListLiteral struct {
+	Token token.Token
+	List  []Expression
+}
+
+func (ll *ListLiteral) ExpressionNode()      {}
+func (ll *ListLiteral) TokenLiteral() string { return ll.Token.Literal }
+func (ll *ListLiteral) String() string {
+	var out bytes.Buffer
+	out.WriteString("[")
+	for _, exp := range ll.List {
+		out.WriteString(fmt.Sprintf("%s, ", exp.String()))
+	}
+	out.WriteString("]")
+	return out.String()
+}
 
 type PrefixExpression struct {
 	Token    token.Token // The prefix token, e.g. -

@@ -524,14 +524,14 @@ func TestPrintStatement(t *testing.T) {
 }
 
 func TestIdentifierExpression(t *testing.T) {
-	input := "foobar;foobar.a;"
+	input := "foobar;foobar.a;foobar[1];"
 
 	l := lexer.New(input)
 	p := New(l)
 	program := p.ParseProgram()
 	checkParserErrors(t, p)
 
-	if len(program.Statements) != 2 {
+	if len(program.Statements) != 3 {
 		t.Fatalf("program has not enough statements. got=%d",
 			len(program.Statements))
 	}
@@ -543,7 +543,7 @@ func TestIdentifierExpression(t *testing.T) {
 
 	attrStmt, ok := program.Statements[1].(*ast.ExpressionStatement)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
+		t.Fatalf("program.Statements[1] is not ast.ExpressionStatement. got=%T",
 			program.Statements[0])
 	}
 
@@ -561,7 +561,7 @@ func TestIdentifierExpression(t *testing.T) {
 
 	attrIdent, ok := attrStmt.Expression.(*ast.Identifier)
 	if !ok {
-		t.Fatalf("attrIdent not *ast.Identifier. got=%T", attrStmt.Expression)
+		t.Fatalf("attrIdent.Expression not *ast.Identifier. got=%T", attrStmt.Expression)
 	}
 
 	if attrIdent.Value != "foobar" {
@@ -918,5 +918,81 @@ func TestParsingInfixExpressions(t *testing.T) {
 		if !testBooleanLiteral(t, expression.Right, test.rightValue) {
 			return
 		}
+	}
+}
+
+func TestLists(t *testing.T) {
+	input := "create int list myList; set myList = [1, 2, 3]; set myList[1] = 100; append 4 to myList; len(myList);"
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 5 {
+		t.Errorf("Expected %d statements, got %d", 5, len(program.Statements))
+	}
+
+	// create int list myList;
+	createStmt, ok := program.Statements[0].(*ast.CreateStatement)
+	if !ok {
+		t.Errorf("TestLists first statement not CreateStatment, got %T", program.Statements[0])
+	}
+
+	if !createStmt.Name.IsList {
+		t.Error("createStmt.Name is not a list")
+	}
+
+	// set myList = [1, 2, 3];
+	setStmt, ok := program.Statements[1].(*ast.SetStatement)
+	if !ok {
+		t.Errorf("TestLists second statement not SetStatment, got %T", program.Statements[1])
+	}
+
+	listLit, ok := setStmt.Value.(*ast.ListLiteral)
+	if !ok {
+		t.Errorf("setStmt.Value is not ListLiteral, got %T", setStmt.Value)
+	}
+
+	values := []int64{1, 2, 3}
+	if len(values) != len(listLit.List) {
+		t.Errorf("Not enough list elements, expected %d, got %d", len(values), len(listLit.List))
+	}
+	for i, _ := range listLit.List {
+		intLit, ok := listLit.List[i].(*ast.IntegerLiteral)
+		if !ok {
+			t.Errorf("List element %s not IntegerLiteral, got %T", listLit.List[i].String(), listLit.List[i])
+		}
+
+		testIntegerLiteral(t, intLit, values[i])
+	}
+
+	// set myList[1] = 100;
+	setStmt, ok = program.Statements[2].(*ast.SetStatement)
+	if !ok {
+		t.Errorf("TestLists third statement not SetStatment, got %T", program.Statements[2])
+	}
+
+	testIntegerLiteral(t, setStmt.Name.Index, 1)
+	testIntegerLiteral(t, setStmt.Value, 100)
+
+	// append 4 to myList;
+	appendStmt, ok := program.Statements[3].(*ast.AppendStatement)
+	if !ok {
+		t.Errorf("TestLists fourth statement not AppendStatement, got %T", program.Statements[3])
+	}
+
+	testIntegerLiteral(t, appendStmt.Value, 4)
+
+	if appendStmt.List.Value != "myList" {
+		t.Errorf("appendStmt.List.Value is not myList, got %s", appendStmt.List.Value)
+	}
+	// len(myList);
+	lenStmt, ok := program.Statements[4].(*ast.LengthStatement)
+	if !ok {
+		t.Errorf("TestLists fifth statement not LengthStatement, got %T", program.Statements[4])
+	}
+
+	if lenStmt.List.Value != "myList" {
+		t.Errorf("lenStmt.List.Value is not myList, got %s", appendStmt.List.Value)
 	}
 }

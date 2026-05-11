@@ -79,6 +79,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.QUOTE, p.parseStringLiteral)
 	p.registerPrefix(token.FALSE, p.parseBooleanLiteral)
 	p.registerPrefix(token.TRUE, p.parseBooleanLiteral)
+	p.registerPrefix(token.LBRACKET, p.parseListLiteral)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.NOT, p.parsePrefixExpression)
 
@@ -131,14 +132,12 @@ func (p *Parser) parseStatement() ast.Statement {
 			return nil
 		}
 		return stmt
-
 	case token.SET:
 		stmt := p.parseSetStatement()
 		if stmt == nil {
 			return nil
 		}
 		return stmt
-
 	case token.IF:
 		stmt := p.parseIfStatement()
 		if stmt == nil {
@@ -169,7 +168,18 @@ func (p *Parser) parseStatement() ast.Statement {
 			return nil
 		}
 		return stmt
-
+	case token.APPEND:
+		stmt := p.parseAppendStatement()
+		if stmt == nil {
+			return nil
+		}
+		return stmt
+	case token.LEN:
+		stmt := p.parseLengthStatement()
+		if stmt == nil {
+			return nil
+		}
+		return stmt
 	default:
 		stmt := p.parseExpressionStatement()
 		if stmt == nil {
@@ -231,11 +241,18 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 		datatype = "float"
 	}
 
+	var isList bool
+
+	if p.peekToken.Type == token.LIST {
+		isList = true
+		p.nextToken()
+	}
+
 	//IDENT
 	if !p.checkNextToken(token.IDENT) {
 		return nil
 	}
-	statement.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal, DataType: datatype}
+	statement.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal, DataType: datatype, IsList: isList}
 
 	//SEMICOLON
 	if !p.checkNextToken(token.SEMICOLON) {
@@ -261,6 +278,15 @@ func (p *Parser) parseSetStatement() *ast.SetStatement {
 			return nil
 		}
 		statement.Name.Attribute = p.curToken.Literal
+	}
+
+	if p.peekToken.Type == token.LBRACKET {
+		p.nextToken()
+		p.nextToken()
+		statement.Name.Index = p.parseExpression(LOWEST)
+		if !p.checkNextToken(token.RBRACKET) {
+			return nil
+		}
 	}
 
 	if !p.checkNextToken(token.ASSIGN) {
@@ -576,6 +602,51 @@ func (p *Parser) parsePrintStatement() *ast.PrintStatement {
 	return statement
 }
 
+func (p *Parser) parseAppendStatement() *ast.AppendStatement {
+	statement := &ast.AppendStatement{Token: p.curToken}
+
+	p.nextToken()
+	statement.Value = p.parseExpression(LOWEST)
+
+	if !p.checkNextToken(token.TO) {
+		return nil
+	}
+
+	if !p.checkNextToken(token.IDENT) {
+		return nil
+	}
+	statement.List = ast.Identifier{Token: p.curToken, Value: p.curToken.Literal, IsList: true}
+
+	if !p.checkNextToken(token.SEMICOLON) {
+		return nil
+	}
+
+	return statement
+}
+
+func (p *Parser) parseLengthStatement() *ast.LengthStatement {
+	statement := &ast.LengthStatement{Token: p.curToken}
+
+	if !p.checkNextToken(token.LPAREN) {
+		return nil
+	}
+
+	if !p.checkNextToken(token.IDENT) {
+		return nil
+	}
+	statement.List = ast.Identifier{Token: p.curToken, Value: p.curToken.Literal, IsList: true}
+
+	if !p.checkNextToken(token.RPAREN) {
+		return nil
+	}
+
+	if !p.checkNextToken(token.SEMICOLON) {
+		return nil
+	}
+
+	return statement
+}
+
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 	msg := fmt.Sprintf("no prefix parse function for %s found", t)
 	p.errors = append(p.errors, msg)
@@ -612,6 +683,14 @@ func (p *Parser) parseIdentifier() ast.Expression {
 			return nil
 		}
 		ident.Attribute = p.curToken.Literal
+	}
+	if p.peekToken.Type == token.LBRACKET {
+		p.nextToken()
+		p.nextToken()
+		ident.Index = p.parseExpression(LOWEST)
+		if !p.checkNextToken(token.RBRACKET) {
+			return nil
+		}
 	}
 	return ident
 }
@@ -667,6 +746,23 @@ func (p *Parser) parseBooleanLiteral() ast.Expression {
 		p.errors = append(p.errors, msg)
 		return nil
 	}
+
+	return lit
+}
+
+func (p *Parser) parseListLiteral() ast.Expression {
+	lit := &ast.ListLiteral{Token: p.curToken}
+	list := []ast.Expression{}
+
+	for p.curToken.Type != token.RBRACKET {
+		p.nextToken()
+		list = append(list, p.parseExpression(LOWEST))
+		if !p.checkMultipleNextToken([]token.TokenType{token.COMMA, token.RBRACKET}) {
+			return nil
+		}
+	}
+
+	lit.List = list
 
 	return lit
 }
