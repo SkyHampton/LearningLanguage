@@ -23,6 +23,11 @@ type Data struct {
 	floatValue  float64
 }
 
+type List struct {
+	dataType int
+	arr      []Data
+}
+
 var variableTypes = map[string]int{
 	"int":    INTTYPE,
 	"bool":   BOOLTYPE,
@@ -38,6 +43,7 @@ var dataTypeToString = map[int]string{
 }
 
 var variableMap = make(map[string]Data)
+var listMap = make(map[string]List)
 var errors []string
 
 func EvaluateProgram(program *ast.Program) (string, []string) {
@@ -84,16 +90,43 @@ func evaluateStatement(statement ast.Statement) string {
 
 	printStmt, ok := statement.(*ast.PrintStatement)
 	if ok {
-		value := evaluateExpression(printStmt.Value)
-		switch value.dataType {
-		case INTTYPE:
-			output = strconv.FormatInt(value.intValue, 10) + "\n"
-		case BOOLTYPE:
-			output = strconv.FormatBool(value.boolValue) + "\n"
-		case FLOATTYPE:
-			output = strconv.FormatFloat(value.floatValue, 'f', -1, 64) + "\n"
-		case STRINGTYPE:
-			output = strings.Trim(value.stringValue, "\"") + "\n"
+		value, list := evaluateExpression(printStmt.Value)
+		if len(list.arr) == 0 {
+			switch value.dataType {
+			case INTTYPE:
+				output = strconv.FormatInt(value.intValue, 10) + "\n"
+			case BOOLTYPE:
+				output = strconv.FormatBool(value.boolValue) + "\n"
+			case FLOATTYPE:
+				output = strconv.FormatFloat(value.floatValue, 'f', -1, 64) + "\n"
+			case STRINGTYPE:
+				output = strings.Trim(value.stringValue, "\"") + "\n"
+			}
+		} else {
+			switch list.dataType {
+			case INTTYPE:
+				output = "["
+				for _, item := range list.arr {
+					output += fmt.Sprintf("%d, ", item.intValue)
+				}
+			case BOOLTYPE:
+				output = "["
+				for _, item := range list.arr {
+					output += fmt.Sprintf("%t, ", item.boolValue)
+				}
+			case FLOATTYPE:
+				output = "["
+				for _, item := range list.arr {
+					output += fmt.Sprintf("%f, ", item.floatValue)
+				}
+			case STRINGTYPE:
+				output = "["
+				for _, item := range list.arr {
+					output += fmt.Sprintf("%s, ", item.stringValue)
+				}
+			}
+			output = strings.TrimSuffix(output, ", ")
+			output += "]"
 		}
 	}
 
@@ -101,7 +134,11 @@ func evaluateStatement(statement ast.Statement) string {
 }
 
 func evaluateCreateStatement(statement *ast.CreateStatement) string {
-	variableMap[statement.Name.Value] = Data{dataType: variableTypes[statement.Name.DataType]}
+	if statement.Name.IsList {
+		listMap[statement.Name.Value] = List{dataType: variableTypes[statement.Name.DataType]}
+	} else {
+		variableMap[statement.Name.Value] = Data{dataType: variableTypes[statement.Name.DataType]}
+	}
 	return ""
 }
 
@@ -112,18 +149,23 @@ func evaluateSetStatement(statement *ast.SetStatement) string {
 	} else {
 		name = statement.Name.Value
 	}
-	_, ok := variableMap[name]
-	if !ok {
+	_, okVar := variableMap[name]
+	_, okList := listMap[name]
+	if !okVar && !okList {
 		errors = append(errors, fmt.Sprintf("Variable %s has not been created.", name))
 		return ""
 	}
-	value := evaluateExpression(statement.Value)
-	if value.dataType != variableMap[name].dataType {
+	value, list := evaluateExpression(statement.Value)
+	if value != (Data{}) && value.dataType != variableMap[name].dataType {
 		errors = append(errors, fmt.Sprintf("Expected data type: %s. Got data type: %s",
 			dataTypeToString[variableMap[name].dataType], dataTypeToString[value.dataType]))
 		return ""
 	}
-	variableMap[name] = value
+	if len(list.arr) != 0 {
+		listMap[statement.Name.Value] = list
+	} else {
+		variableMap[name] = value
+	}
 	return ""
 }
 
@@ -133,7 +175,7 @@ func evaluateStructStatement(statement *ast.StructStatement) string {
 		if statement.Values[attribute.Value] == nil {
 			variableMap[attributeName] = Data{dataType: variableTypes[attribute.DataType]}
 		} else {
-			value := evaluateExpression(statement.Values[attribute.Value])
+			value, _ := evaluateExpression(statement.Values[attribute.Value])
 			if variableTypes[attribute.DataType] != value.dataType {
 				errors = append(errors, fmt.Sprintf("Expected data type: %s. Got data type: %s",
 					attribute.DataType, dataTypeToString[value.dataType]))
@@ -146,7 +188,7 @@ func evaluateStructStatement(statement *ast.StructStatement) string {
 
 func evaluateIfStatement(statement *ast.IfStatement) string {
 	ret := ""
-	conditionData := evaluateExpression(statement.Condition)
+	conditionData, _ := evaluateExpression(statement.Condition)
 	if conditionData.dataType != BOOLTYPE {
 		errors = append(errors, "Cannot use non-boolean expression in if statement condition.")
 		return ""
@@ -167,7 +209,7 @@ func evaluateIfStatement(statement *ast.IfStatement) string {
 
 func evaluateWhileStatement(statement *ast.WhileStatement) string {
 	ret := ""
-	conditionData := evaluateExpression(statement.Condition)
+	conditionData, _ := evaluateExpression(statement.Condition)
 	if conditionData.dataType != BOOLTYPE {
 		errors = append(errors, "Cannot use non-boolean expression in while statement condition.")
 		return ""
@@ -176,7 +218,7 @@ func evaluateWhileStatement(statement *ast.WhileStatement) string {
 			for _, stmt := range statement.LoopStatements {
 				ret += evaluateStatement(stmt)
 			}
-			conditionData = evaluateExpression(statement.Condition)
+			conditionData, _ = evaluateExpression(statement.Condition)
 		}
 	}
 
@@ -185,9 +227,9 @@ func evaluateWhileStatement(statement *ast.WhileStatement) string {
 
 func evaluateCountStatement(statement *ast.CountStatement) string {
 	ret := ""
-	fromValue := evaluateExpression(statement.From)
-	toValue := evaluateExpression(statement.To)
-	byValue := evaluateExpression(statement.By)
+	fromValue, _ := evaluateExpression(statement.From)
+	toValue, _ := evaluateExpression(statement.To)
+	byValue, _ := evaluateExpression(statement.By)
 	if fromValue.dataType != INTTYPE || toValue.dataType != INTTYPE || byValue.dataType != INTTYPE {
 		errors = append(errors, "Cannot use non-integer values in counting statement from, to, or by.")
 		return ""
@@ -207,8 +249,9 @@ func evaluateCountStatement(statement *ast.CountStatement) string {
 	return ret
 }
 
-func evaluateExpression(expression ast.Expression) Data {
-	var value Data
+func evaluateExpression(expression ast.Expression) (Data, List) {
+	var value Data = Data{}
+	var list List = List{}
 
 	intLit, ok := expression.(*ast.IntegerLiteral)
 	if ok {
@@ -230,9 +273,14 @@ func evaluateExpression(expression ast.Expression) Data {
 		value = evaluateStringLit(strLit)
 	}
 
+	listLit, ok := expression.(*ast.ListLiteral)
+	if ok {
+		list = evaluateListLit(listLit)
+	}
+
 	identifierExp, ok := expression.(*ast.Identifier)
 	if ok {
-		value = evaluateIdentifier(identifierExp)
+		value, list = evaluateIdentifier(identifierExp)
 	}
 
 	prefixExp, ok := expression.(*ast.PrefixExpression)
@@ -245,7 +293,7 @@ func evaluateExpression(expression ast.Expression) Data {
 		value = evaluateInfixExp(infixExp)
 	}
 
-	return value
+	return value, list
 }
 
 func evaluateIntLit(expression *ast.IntegerLiteral) Data {
@@ -264,8 +312,23 @@ func evaluateStringLit(expression *ast.StringLiteral) Data {
 	return Data{dataType: STRINGTYPE, stringValue: expression.Value}
 }
 
-func evaluateIdentifier(identifier *ast.Identifier) Data {
+func evaluateListLit(expression *ast.ListLiteral) List {
+	expList := expression.List
+	var dataList List
+	for _, exp := range expList {
+		data, _ := evaluateExpression(exp)
+		if data.dataType != dataList.dataType {
+			errors = append(errors, "Mismatching list elements")
+		}
+		dataList.arr = append(dataList.arr, data)
+	}
+
+	return dataList
+}
+
+func evaluateIdentifier(identifier *ast.Identifier) (Data, List) {
 	var name string
+	var list List
 	if identifier.Attribute != "" {
 		name = fmt.Sprintf("%s.%s", identifier.Value, identifier.Attribute)
 	} else {
@@ -273,15 +336,20 @@ func evaluateIdentifier(identifier *ast.Identifier) Data {
 	}
 	value, ok := variableMap[name]
 	if !ok {
-		errors = append(errors, fmt.Sprintf("Variable %s does not exist.", identifier.Value))
-		return Data{}
+		list, ok = listMap[name]
+		if !ok {
+			errors = append(errors, fmt.Sprintf("Variable %s does not exist.", identifier.Value))
+			return Data{}, List{}
+		} else {
+			return Data{}, list
+		}
 	}
 
-	return value
+	return value, List{}
 }
 
 func evaluatePrefixExp(expression *ast.PrefixExpression) Data {
-	value := evaluateExpression(expression.Right)
+	value, _ := evaluateExpression(expression.Right)
 	switch expression.Operator {
 	case "-":
 		value.intValue = -1 * value.intValue
@@ -293,8 +361,8 @@ func evaluatePrefixExp(expression *ast.PrefixExpression) Data {
 }
 
 func evaluateInfixExp(expression *ast.InfixExpression) Data {
-	leftValue := evaluateExpression(expression.Left)
-	rightValue := evaluateExpression(expression.Right)
+	leftValue, _ := evaluateExpression(expression.Left)
+	rightValue, _ := evaluateExpression(expression.Right)
 	var retValue Data
 
 	switch expression.Operator {

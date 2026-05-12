@@ -186,3 +186,28 @@ func TestDataTypes(test *testing.T) {
 		test.Fatalf("Incorrect variable value, expected \n123\ntrue\n3.14\nHello World\ngot \n%s", output)
 	}
 }
+
+func TestListLiteral(test *testing.T) {
+	input := `create int list a;
+				set a = [1, 2, 3, 4, 5];
+				print(a);`
+
+	l := lexer.New(input)
+	p := parser.New(l)
+	program := p.ParseProgram()
+	parserErrors := p.Errors()
+	if len(parserErrors) != 0 {
+		test.Fatalf("Parser Errors were fount: %v", parserErrors)
+	}
+
+	output, errors := EvaluateProgram(program)
+	expectedOutput := "[1, 2, 3, 4, 5]"
+
+	if len(errors) != 0 {
+		test.Fatalf("Errors were found: %v", errors)
+	}
+
+	if output != expectedOutput {
+		test.Fatalf("Incorrect variable value, expected %s, got %s.", expectedOutput, output)
+	}
+}
