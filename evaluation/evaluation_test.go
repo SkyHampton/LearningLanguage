@@ -14,16 +14,19 @@ func TestCreateSetEval(test *testing.T) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
+	e := Evaluator{}
 
-	output, errors := EvaluateProgram(program)
+	output := e.EvaluateProgram(program)
+	errors := e.Errors()
 	if len(errors) != 0 {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
 	output = strings.TrimSpace(output)
+	expectedOutput := "64"
 
-	if output != "64" {
-		test.Fatalf("Incorrect variable value, expected 64, got %s", output)
+	if output != expectedOutput {
+		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
 	}
 }
 
@@ -32,16 +35,19 @@ func TestIfEval(test *testing.T) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
+	e := Evaluator{}
 
-	output, errors := EvaluateProgram(program)
+	output := e.EvaluateProgram(program)
+	errors := e.Errors()
 	if len(errors) != 0 {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
 	output = strings.TrimSpace(output)
+	expectedOutput := "1 not greater than 2"
 
-	if output != "1 not greater than 2" {
-		test.Fatalf("Incorrect variable value, expected false, got %s", output)
+	if output != expectedOutput {
+		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
 	}
 }
 
@@ -50,8 +56,10 @@ func TestWhileEval(test *testing.T) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
+	e := Evaluator{}
 
-	output, errors := EvaluateProgram(program)
+	output := e.EvaluateProgram(program)
+	errors := e.Errors()
 	parserErrors := p.Errors()
 	if len(parserErrors) != 0 {
 		test.Fatalf("Errors were found: %v", parserErrors)
@@ -61,9 +69,10 @@ func TestWhileEval(test *testing.T) {
 	}
 
 	output = strings.TrimSpace(output)
+	expectedOutput := "0123456789"
 
-	if output != "0\n1\n2\n3\n4\n5\n6\n7\n8\n9" {
-		test.Fatalf("Incorrect variable value, expected 0123456789, got %s", output)
+	if output != expectedOutput {
+		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
 	}
 }
 
@@ -72,8 +81,10 @@ func TestCountEval(test *testing.T) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
+	e := Evaluator{}
 
-	output, errors := EvaluateProgram(program)
+	output := e.EvaluateProgram(program)
+	errors := e.Errors()
 	parserErrors := p.Errors()
 	if len(parserErrors) != 0 {
 		test.Fatalf("Errors were found: %v", parserErrors)
@@ -83,9 +94,10 @@ func TestCountEval(test *testing.T) {
 	}
 
 	output = strings.TrimSpace(output)
+	expectedOutput := "12345678910"
 
-	if output != "1\n2\n3\n4\n5\n6\n7\n8\n9\n10" {
-		test.Fatalf("Incorrect variable value, expected 12345678910, got %s", output)
+	if output != expectedOutput {
+		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
 	}
 }
 
@@ -98,16 +110,19 @@ func TestStructEval(test *testing.T) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
+	e := Evaluator{}
 
-	output, errors := EvaluateProgram(program)
+	output := e.EvaluateProgram(program)
+	errors := e.Errors()
 	if len(errors) != 0 {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
 	output = strings.TrimSpace(output)
+	expectedOutput := "123false"
 
-	if output != "123\nfalse" {
-		test.Fatalf("Incorrect variable value, expected \n123\nfalse, got \n%s", output)
+	if output != expectedOutput {
+		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
 	}
 }
 
@@ -116,16 +131,19 @@ func TestPrefixEval(test *testing.T) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
+	e := Evaluator{}
 
-	output, errors := EvaluateProgram(program)
+	output := e.EvaluateProgram(program)
+	errors := e.Errors()
 	if len(errors) != 0 {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
 	output = strings.TrimSpace(output)
+	expectedOutput := "-123false"
 
-	if output != "-123\nfalse" {
-		test.Fatalf("Incorrect variable value, expected \n-123\nfalse, got \n%s", output)
+	if output != expectedOutput {
+		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
 	}
 }
 
@@ -144,17 +162,20 @@ func TestInfixEval(test *testing.T) {
 			print(false or true);`
 	l := lexer.New(input)
 	p := parser.New(l)
+	e := Evaluator{}
 	program := p.ParseProgram()
 
-	output, errors := EvaluateProgram(program)
+	output := e.EvaluateProgram(program)
+	errors := e.Errors()
 	if len(errors) != 0 {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
 	output = strings.TrimSpace(output)
+	expectedOutput := "20264truetruetruefalsetruetruefalsetrue"
 
-	if output != "2\n0\n2\n64\ntrue\ntrue\ntrue\nfalse\ntrue\ntrue\nfalse\ntrue" {
-		test.Fatalf("Incorrect variable value, expected \n2\n0\n2\n64\ntrue\ntrue\ntrue\nfalse\ntrue\ntrue\nfalse\ntrue\ngot \n%s", output)
+	if output != expectedOutput {
+		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
 	}
 }
 
@@ -173,17 +194,20 @@ func TestDataTypes(test *testing.T) {
 				print(z);`
 	l := lexer.New(input)
 	p := parser.New(l)
+	e := Evaluator{}
 	program := p.ParseProgram()
 
-	output, errors := EvaluateProgram(program)
+	output := e.EvaluateProgram(program)
+	errors := e.Errors()
 	if len(errors) != 0 {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
 	output = strings.TrimSpace(output)
+	expectedOutput := "123true3.14Hello World"
 
-	if output != "123\ntrue\n3.14\nHello World" {
-		test.Fatalf("Incorrect variable value, expected \n123\ntrue\n3.14\nHello World\ngot \n%s", output)
+	if output != expectedOutput {
+		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
 	}
 }
 
@@ -194,14 +218,45 @@ func TestListLiteral(test *testing.T) {
 
 	l := lexer.New(input)
 	p := parser.New(l)
+	e := Evaluator{}
 	program := p.ParseProgram()
 	parserErrors := p.Errors()
 	if len(parserErrors) != 0 {
 		test.Fatalf("Parser Errors were fount: %v", parserErrors)
 	}
 
-	output, errors := EvaluateProgram(program)
+	output := e.EvaluateProgram(program)
+	errors := e.Errors()
 	expectedOutput := "[1, 2, 3, 4, 5]"
+
+	if len(errors) != 0 {
+		test.Fatalf("Errors were found: %v", errors)
+	}
+
+	if output != expectedOutput {
+		test.Fatalf("Incorrect variable value, expected %s, got %s.", expectedOutput, output)
+	}
+}
+
+func TestListSetIndex(test *testing.T) {
+	input := `create int list a;
+				set a = [1, 2, 3, 4, 5];
+				set a[3] = 30;
+				print(a);
+				print(a[3]);`
+
+	l := lexer.New(input)
+	p := parser.New(l)
+	e := Evaluator{}
+	program := p.ParseProgram()
+	parserErrors := p.Errors()
+	if len(parserErrors) != 0 {
+		test.Fatalf("Parser Errors were fount: %v", parserErrors)
+	}
+
+	output := e.EvaluateProgram(program)
+	errors := e.Errors()
+	expectedOutput := "[1, 2, 30, 4, 5]30"
 
 	if len(errors) != 0 {
 		test.Fatalf("Errors were found: %v", errors)

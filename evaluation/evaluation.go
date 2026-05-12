@@ -28,6 +28,12 @@ type List struct {
 	arr      []Data
 }
 
+type Evaluator struct {
+	errors      []string
+	variableMap map[string]Data
+	listMap     map[string]List
+}
+
 var variableTypes = map[string]int{
 	"int":    INTTYPE,
 	"bool":   BOOLTYPE,
@@ -42,65 +48,67 @@ var dataTypeToString = map[int]string{
 	FLOATTYPE:  "FLOAT",
 }
 
-var variableMap = make(map[string]Data)
-var listMap = make(map[string]List)
-var errors []string
-
-func EvaluateProgram(program *ast.Program) (string, []string) {
-	var output bytes.Buffer
-	errors = []string{}
-	for _, statement := range program.Statements {
-		output.WriteString(evaluateStatement(statement))
-	}
-
-	return output.String(), errors
+func (e *Evaluator) Errors() []string {
+	return e.errors
 }
 
-func evaluateStatement(statement ast.Statement) string {
+func (e *Evaluator) EvaluateProgram(program *ast.Program) string {
+	var output bytes.Buffer
+	e.errors = []string{}
+	e.variableMap = make(map[string]Data)
+	e.listMap = make(map[string]List)
+	for _, statement := range program.Statements {
+		output.WriteString(e.evaluateStatement(statement))
+	}
+
+	return output.String()
+}
+
+func (e *Evaluator) evaluateStatement(statement ast.Statement) string {
 	var output string
 	createStmt, ok := statement.(*ast.CreateStatement)
 	if ok {
-		output = evaluateCreateStatement(createStmt)
+		output = e.evaluateCreateStatement(createStmt)
 	}
 
 	setStmt, ok := statement.(*ast.SetStatement)
 	if ok {
-		output = evaluateSetStatement(setStmt)
+		output = e.evaluateSetStatement(setStmt)
 	}
 
 	ifStmt, ok := statement.(*ast.IfStatement)
 	if ok {
-		output = evaluateIfStatement(ifStmt)
+		output = e.evaluateIfStatement(ifStmt)
 	}
 
 	whileStmt, ok := statement.(*ast.WhileStatement)
 	if ok {
-		output = evaluateWhileStatement(whileStmt)
+		output = e.evaluateWhileStatement(whileStmt)
 	}
 
 	countStmt, ok := statement.(*ast.CountStatement)
 	if ok {
-		output = evaluateCountStatement(countStmt)
+		output = e.evaluateCountStatement(countStmt)
 	}
 
 	structStmt, ok := statement.(*ast.StructStatement)
 	if ok {
-		output = evaluateStructStatement(structStmt)
+		output = e.evaluateStructStatement(structStmt)
 	}
 
 	printStmt, ok := statement.(*ast.PrintStatement)
 	if ok {
-		value, list := evaluateExpression(printStmt.Value)
+		value, list := e.evaluateExpression(printStmt.Value)
 		if len(list.arr) == 0 {
 			switch value.dataType {
 			case INTTYPE:
-				output = strconv.FormatInt(value.intValue, 10) + "\n"
+				output = strconv.FormatInt(value.intValue, 10)
 			case BOOLTYPE:
-				output = strconv.FormatBool(value.boolValue) + "\n"
+				output = strconv.FormatBool(value.boolValue)
 			case FLOATTYPE:
-				output = strconv.FormatFloat(value.floatValue, 'f', -1, 64) + "\n"
+				output = strconv.FormatFloat(value.floatValue, 'f', -1, 64)
 			case STRINGTYPE:
-				output = strings.Trim(value.stringValue, "\"") + "\n"
+				output = strings.Trim(value.stringValue, "\"")
 			}
 		} else {
 			switch list.dataType {
@@ -133,51 +141,74 @@ func evaluateStatement(statement ast.Statement) string {
 	return output
 }
 
-func evaluateCreateStatement(statement *ast.CreateStatement) string {
+func (e *Evaluator) evaluateCreateStatement(statement *ast.CreateStatement) string {
 	if statement.Name.IsList {
-		listMap[statement.Name.Value] = List{dataType: variableTypes[statement.Name.DataType]}
+		e.listMap[statement.Name.Value] = List{dataType: variableTypes[statement.Name.DataType]}
 	} else {
-		variableMap[statement.Name.Value] = Data{dataType: variableTypes[statement.Name.DataType]}
+		e.variableMap[statement.Name.Value] = Data{dataType: variableTypes[statement.Name.DataType]}
 	}
 	return ""
 }
 
-func evaluateSetStatement(statement *ast.SetStatement) string {
+func (e *Evaluator) evaluateSetStatement(statement *ast.SetStatement) string {
 	var name string
 	if statement.Name.Attribute != "" {
 		name = fmt.Sprintf("%s.%s", statement.Name.Value, statement.Name.Attribute)
 	} else {
 		name = statement.Name.Value
 	}
-	_, okVar := variableMap[name]
-	_, okList := listMap[name]
+	_, okVar := e.variableMap[name]
+	_, okList := e.listMap[name]
 	if !okVar && !okList {
-		errors = append(errors, fmt.Sprintf("Variable %s has not been created.", name))
+		e.errors = append(e.errors, fmt.Sprintf("Variable %s has not been created.", name))
 		return ""
 	}
-	value, list := evaluateExpression(statement.Value)
-	if value != (Data{}) && value.dataType != variableMap[name].dataType {
-		errors = append(errors, fmt.Sprintf("Expected data type: %s. Got data type: %s",
-			dataTypeToString[variableMap[name].dataType], dataTypeToString[value.dataType]))
+	value, list := e.evaluateExpression(statement.Value)
+	if statement.Name.Index != nil && okList && len(list.arr) == 0 {
+		indexValue, _ := e.evaluateExpression(statement.Name.Index)
+		if indexValue.dataType != INTTYPE {
+			e.errors = append(e.errors, "Cannot use non-integer values in list index")
+			return ""
+		}
+		if int(indexValue.intValue) > len(e.listMap[name].arr) || indexValue.intValue < 0 {
+			e.errors = append(e.errors, "Index out of range")
+			return ""
+		}
+		if value.dataType != e.listMap[name].dataType {
+			e.errors = append(e.errors, "Mismatching list data types")
+			return ""
+		}
+		e.listMap[name].arr[indexValue.intValue-1] = value
+		return ""
+	}
+	if value != (Data{}) && value.dataType != e.variableMap[name].dataType {
+		e.errors = append(e.errors, fmt.Sprintf("Expected data type: %s. Got data type: %s",
+			dataTypeToString[e.variableMap[name].dataType], dataTypeToString[value.dataType]))
+		return ""
+	}
+	if len(list.arr) != 0 && list.dataType != e.listMap[name].dataType {
+		e.errors = append(e.errors, "Mismatching list data types")
 		return ""
 	}
 	if len(list.arr) != 0 {
-		listMap[statement.Name.Value] = list
-	} else {
-		variableMap[name] = value
+		e.listMap[name] = list
+		return ""
+	}
+	if len(list.arr) == 0 {
+		e.variableMap[name] = value
 	}
 	return ""
 }
 
-func evaluateStructStatement(statement *ast.StructStatement) string {
+func (e *Evaluator) evaluateStructStatement(statement *ast.StructStatement) string {
 	for _, attribute := range statement.Attributes {
 		attributeName := fmt.Sprintf("%s.%s", statement.StructIdent.Value, attribute.Value)
 		if statement.Values[attribute.Value] == nil {
-			variableMap[attributeName] = Data{dataType: variableTypes[attribute.DataType]}
+			e.variableMap[attributeName] = Data{dataType: variableTypes[attribute.DataType]}
 		} else {
-			value, _ := evaluateExpression(statement.Values[attribute.Value])
+			value, _ := e.evaluateExpression(statement.Values[attribute.Value])
 			if variableTypes[attribute.DataType] != value.dataType {
-				errors = append(errors, fmt.Sprintf("Expected data type: %s. Got data type: %s",
+				e.errors = append(e.errors, fmt.Sprintf("Expected data type: %s. Got data type: %s",
 					attribute.DataType, dataTypeToString[value.dataType]))
 				return ""
 			}
@@ -186,20 +217,20 @@ func evaluateStructStatement(statement *ast.StructStatement) string {
 	return ""
 }
 
-func evaluateIfStatement(statement *ast.IfStatement) string {
+func (e *Evaluator) evaluateIfStatement(statement *ast.IfStatement) string {
 	ret := ""
-	conditionData, _ := evaluateExpression(statement.Condition)
+	conditionData, _ := e.evaluateExpression(statement.Condition)
 	if conditionData.dataType != BOOLTYPE {
-		errors = append(errors, "Cannot use non-boolean expression in if statement condition.")
+		e.errors = append(e.errors, "Cannot use non-boolean expression in if statement condition.")
 		return ""
 	} else {
 		if conditionData.boolValue {
 			for _, stmt := range statement.IfTrue {
-				ret += evaluateStatement(stmt)
+				ret += e.evaluateStatement(stmt)
 			}
 		} else {
 			for _, stmt := range statement.Else {
-				ret += evaluateStatement(stmt)
+				ret += e.evaluateStatement(stmt)
 			}
 		}
 	}
@@ -207,118 +238,118 @@ func evaluateIfStatement(statement *ast.IfStatement) string {
 	return ret
 }
 
-func evaluateWhileStatement(statement *ast.WhileStatement) string {
+func (e *Evaluator) evaluateWhileStatement(statement *ast.WhileStatement) string {
 	ret := ""
-	conditionData, _ := evaluateExpression(statement.Condition)
+	conditionData, _ := e.evaluateExpression(statement.Condition)
 	if conditionData.dataType != BOOLTYPE {
-		errors = append(errors, "Cannot use non-boolean expression in while statement condition.")
+		e.errors = append(e.errors, "Cannot use non-boolean expression in while statement condition.")
 		return ""
 	} else {
 		for conditionData.boolValue {
 			for _, stmt := range statement.LoopStatements {
-				ret += evaluateStatement(stmt)
+				ret += e.evaluateStatement(stmt)
 			}
-			conditionData, _ = evaluateExpression(statement.Condition)
+			conditionData, _ = e.evaluateExpression(statement.Condition)
 		}
 	}
 
 	return ret
 }
 
-func evaluateCountStatement(statement *ast.CountStatement) string {
+func (e *Evaluator) evaluateCountStatement(statement *ast.CountStatement) string {
 	ret := ""
-	fromValue, _ := evaluateExpression(statement.From)
-	toValue, _ := evaluateExpression(statement.To)
-	byValue, _ := evaluateExpression(statement.By)
+	fromValue, _ := e.evaluateExpression(statement.From)
+	toValue, _ := e.evaluateExpression(statement.To)
+	byValue, _ := e.evaluateExpression(statement.By)
 	if fromValue.dataType != INTTYPE || toValue.dataType != INTTYPE || byValue.dataType != INTTYPE {
-		errors = append(errors, "Cannot use non-integer values in counting statement from, to, or by.")
+		e.errors = append(e.errors, "Cannot use non-integer values in counting statement from, to, or by.")
 		return ""
 	}
 
 	counterName := statement.Counter.Value
-	variableMap[counterName] = fromValue
-	for variableMap[counterName].intValue <= toValue.intValue {
+	e.variableMap[counterName] = fromValue
+	for e.variableMap[counterName].intValue <= toValue.intValue {
 		for _, stmt := range statement.LoopStatements {
-			ret += evaluateStatement(stmt)
+			ret += e.evaluateStatement(stmt)
 		}
-		tempData := variableMap[counterName]
+		tempData := e.variableMap[counterName]
 		tempData.intValue += byValue.intValue
-		variableMap[counterName] = tempData
+		e.variableMap[counterName] = tempData
 	}
 
 	return ret
 }
 
-func evaluateExpression(expression ast.Expression) (Data, List) {
+func (e *Evaluator) evaluateExpression(expression ast.Expression) (Data, List) {
 	var value Data = Data{}
 	var list List = List{}
 
 	intLit, ok := expression.(*ast.IntegerLiteral)
 	if ok {
-		value = evaluateIntLit(intLit)
+		value = e.evaluateIntLit(intLit)
 	}
 
 	boolLit, ok := expression.(*ast.BooleanLiteral)
 	if ok {
-		value = evaluateBoolLit(boolLit)
+		value = e.evaluateBoolLit(boolLit)
 	}
 
 	floatLiteral, ok := expression.(*ast.FloatLiteral)
 	if ok {
-		value = evaluateFloatLit(floatLiteral)
+		value = e.evaluateFloatLit(floatLiteral)
 	}
 
 	strLit, ok := expression.(*ast.StringLiteral)
 	if ok {
-		value = evaluateStringLit(strLit)
+		value = e.evaluateStringLit(strLit)
 	}
 
 	listLit, ok := expression.(*ast.ListLiteral)
 	if ok {
-		list = evaluateListLit(listLit)
+		list = e.evaluateListLit(listLit)
 	}
 
 	identifierExp, ok := expression.(*ast.Identifier)
 	if ok {
-		value, list = evaluateIdentifier(identifierExp)
+		value, list = e.evaluateIdentifier(identifierExp)
 	}
 
 	prefixExp, ok := expression.(*ast.PrefixExpression)
 	if ok {
-		value = evaluatePrefixExp(prefixExp)
+		value = e.evaluatePrefixExp(prefixExp)
 	}
 
 	infixExp, ok := expression.(*ast.InfixExpression)
 	if ok {
-		value = evaluateInfixExp(infixExp)
+		value = e.evaluateInfixExp(infixExp)
 	}
 
 	return value, list
 }
 
-func evaluateIntLit(expression *ast.IntegerLiteral) Data {
+func (e *Evaluator) evaluateIntLit(expression *ast.IntegerLiteral) Data {
 	return Data{dataType: INTTYPE, intValue: expression.Value}
 }
 
-func evaluateBoolLit(expression *ast.BooleanLiteral) Data {
+func (e *Evaluator) evaluateBoolLit(expression *ast.BooleanLiteral) Data {
 	return Data{dataType: BOOLTYPE, boolValue: expression.Value}
 }
 
-func evaluateFloatLit(expression *ast.FloatLiteral) Data {
+func (e *Evaluator) evaluateFloatLit(expression *ast.FloatLiteral) Data {
 	return Data{dataType: FLOATTYPE, floatValue: expression.Value}
 }
 
-func evaluateStringLit(expression *ast.StringLiteral) Data {
+func (e *Evaluator) evaluateStringLit(expression *ast.StringLiteral) Data {
 	return Data{dataType: STRINGTYPE, stringValue: expression.Value}
 }
 
-func evaluateListLit(expression *ast.ListLiteral) List {
+func (e *Evaluator) evaluateListLit(expression *ast.ListLiteral) List {
 	expList := expression.List
 	var dataList List
 	for _, exp := range expList {
-		data, _ := evaluateExpression(exp)
+		data, _ := e.evaluateExpression(exp)
 		if data.dataType != dataList.dataType {
-			errors = append(errors, "Mismatching list elements")
+			e.errors = append(e.errors, "Mismatching list elements")
 		}
 		dataList.arr = append(dataList.arr, data)
 	}
@@ -326,7 +357,7 @@ func evaluateListLit(expression *ast.ListLiteral) List {
 	return dataList
 }
 
-func evaluateIdentifier(identifier *ast.Identifier) (Data, List) {
+func (e *Evaluator) evaluateIdentifier(identifier *ast.Identifier) (Data, List) {
 	var name string
 	var list List
 	if identifier.Attribute != "" {
@@ -334,13 +365,25 @@ func evaluateIdentifier(identifier *ast.Identifier) (Data, List) {
 	} else {
 		name = identifier.Value
 	}
-	value, ok := variableMap[name]
+	value, ok := e.variableMap[name]
 	if !ok {
-		list, ok = listMap[name]
+		list, ok = e.listMap[name]
 		if !ok {
-			errors = append(errors, fmt.Sprintf("Variable %s does not exist.", identifier.Value))
+			e.errors = append(e.errors, fmt.Sprintf("Variable %s does not exist.", identifier.Value))
 			return Data{}, List{}
 		} else {
+			if identifier.Index != nil {
+				indexValue, _ := e.evaluateExpression(identifier.Index)
+				if indexValue.dataType != INTTYPE {
+					e.errors = append(e.errors, "Cannot use non-integer values in list index")
+					return Data{}, List{}
+				}
+				if int(indexValue.intValue) > len(e.listMap[name].arr) || indexValue.intValue < 0 {
+					e.errors = append(e.errors, "Index out of range")
+					return Data{}, List{}
+				}
+				return list.arr[indexValue.intValue-1], List{}
+			}
 			return Data{}, list
 		}
 	}
@@ -348,8 +391,8 @@ func evaluateIdentifier(identifier *ast.Identifier) (Data, List) {
 	return value, List{}
 }
 
-func evaluatePrefixExp(expression *ast.PrefixExpression) Data {
-	value, _ := evaluateExpression(expression.Right)
+func (e *Evaluator) evaluatePrefixExp(expression *ast.PrefixExpression) Data {
+	value, _ := e.evaluateExpression(expression.Right)
 	switch expression.Operator {
 	case "-":
 		value.intValue = -1 * value.intValue
@@ -360,9 +403,9 @@ func evaluatePrefixExp(expression *ast.PrefixExpression) Data {
 	return value
 }
 
-func evaluateInfixExp(expression *ast.InfixExpression) Data {
-	leftValue, _ := evaluateExpression(expression.Left)
-	rightValue, _ := evaluateExpression(expression.Right)
+func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
+	leftValue, _ := e.evaluateExpression(expression.Left)
+	rightValue, _ := e.evaluateExpression(expression.Right)
 	var retValue Data
 
 	switch expression.Operator {
@@ -500,42 +543,42 @@ func evaluateInfixExp(expression *ast.InfixExpression) Data {
 	case ">":
 		retValue.dataType = BOOLTYPE
 		if leftValue.dataType != INTTYPE && leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE && rightValue.dataType != FLOATTYPE {
-			errors = append(errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
+			e.errors = append(e.errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue > rightValue.intValue
 	case ">=":
 		retValue.dataType = BOOLTYPE
 		if leftValue.dataType != INTTYPE && leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE && rightValue.dataType != FLOATTYPE {
-			errors = append(errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
+			e.errors = append(e.errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue >= rightValue.intValue
 	case "<":
 		retValue.dataType = BOOLTYPE
 		if leftValue.dataType != INTTYPE && leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE && rightValue.dataType != FLOATTYPE {
-			errors = append(errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
+			e.errors = append(e.errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue < rightValue.intValue
 	case "<=":
 		retValue.dataType = BOOLTYPE
 		if leftValue.dataType != INTTYPE && leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE && rightValue.dataType != FLOATTYPE {
-			errors = append(errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
+			e.errors = append(e.errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue <= rightValue.intValue
 	case "or":
 		retValue.dataType = BOOLTYPE
 		if leftValue.dataType != BOOLTYPE && rightValue.dataType != BOOLTYPE {
-			errors = append(errors, "Cannot perform perform logical operations with non-booleans.")
+			e.errors = append(e.errors, "Cannot perform perform logical operations with non-booleans.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.boolValue || rightValue.boolValue
 	case "and":
 		retValue.dataType = BOOLTYPE
 		if leftValue.dataType != BOOLTYPE && rightValue.dataType != BOOLTYPE {
-			errors = append(errors, "Cannot perform perform logical operations with non-booleans.")
+			e.errors = append(e.errors, "Cannot perform perform logical operations with non-booleans.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.boolValue && rightValue.boolValue
