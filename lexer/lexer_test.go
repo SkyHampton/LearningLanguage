@@ -14,7 +14,7 @@ import (
 )
 
 func TestLexerKeywords(t *testing.T) {
-	input := `set create if else while count from to by begin end true false struct int bool float string print and or list append len`
+	input := `set create if else while count from to by begin end true false struct int bool float string print println and or list append len`
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
@@ -38,6 +38,7 @@ func TestLexerKeywords(t *testing.T) {
 		{token.FLOAT, "float"},
 		{token.STRING, "string"},
 		{token.PRINT, "print"},
+		{token.PRINTLN, "println"},
 		{token.AND, "and"},
 		{token.OR, "or"},
 		{token.LIST, "list"},
