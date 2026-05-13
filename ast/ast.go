@@ -190,14 +190,19 @@ func (ss *StructStatement) String() string {
 }
 
 type PrintStatement struct {
-	Token token.Token
-	Value Expression
+	Token   token.Token
+	Value   Expression
+	NewLine bool
 }
 
 func (ps *PrintStatement) StatementNode()       {}
 func (ps *PrintStatement) TokenLiteral() string { return ps.Token.Literal }
 func (ps *PrintStatement) String() string {
-	return "Print(" + ps.Value.String() + ")"
+	if ps.NewLine {
+		return "Println(" + ps.Value.String() + ")"
+	} else {
+		return "Print(" + ps.Value.String() + ")"
+	}
 }
 
 type AppendStatement struct {

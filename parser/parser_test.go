@@ -491,14 +491,14 @@ func TestAttributeIdentifier(t *testing.T) {
 }
 
 func TestPrintStatement(t *testing.T) {
-	input := "print(\"Hello World\");"
+	input := "print(\"Hello World\");println(\"Hello World\");"
 
 	l := lexer.New(input)
 	p := New(l)
 	program := p.ParseProgram()
 	checkParserErrors(t, p)
 
-	if len(program.Statements) != 1 {
+	if len(program.Statements) != 2 {
 		t.Fatalf("program has not enough statements. got=%d",
 			len(program.Statements))
 	}
@@ -514,6 +514,25 @@ func TestPrintStatement(t *testing.T) {
 	}
 
 	strLit, ok := stmt.Value.(*ast.StringLiteral)
+	if !ok {
+		t.Fatalf("stmt.Value is not ast.StringLiteral. got=%T", stmt.Value)
+	}
+
+	if strLit.Value != "\"Hello World\"" {
+		t.Fatalf("strLit.Value is not \"Hello World\". got=%s", strLit.Value)
+	}
+
+	stmt, ok = program.Statements[1].(*ast.PrintStatement)
+	if !ok {
+		t.Fatalf("program.Statements[1] is not ast.PrintStatement. got=%T",
+			program.Statements[1])
+	}
+
+	if stmt.TokenLiteral() != "println" {
+		t.Errorf("stmt.TokenLiteral not %s. got=%s", "print", stmt.TokenLiteral())
+	}
+
+	strLit, ok = stmt.Value.(*ast.StringLiteral)
 	if !ok {
 		t.Fatalf("stmt.Value is not ast.StringLiteral. got=%T", stmt.Value)
 	}

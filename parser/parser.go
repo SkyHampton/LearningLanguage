@@ -163,6 +163,12 @@ func (p *Parser) parseStatement() ast.Statement {
 			return nil
 		}
 		return stmt
+	case token.PRINTLN:
+		stmt := p.parsePrintStatement()
+		if stmt == nil {
+			return nil
+		}
+		return stmt
 	case token.COUNT:
 		stmt := p.parseCountStatement()
 		if stmt == nil {
@@ -578,6 +584,10 @@ func (p *Parser) parseStructStatement() *ast.StructStatement {
 
 func (p *Parser) parsePrintStatement() *ast.PrintStatement {
 	statement := &ast.PrintStatement{Token: p.curToken}
+
+	if p.curToken.Type == token.PRINTLN {
+		statement.NewLine = true
+	}
 
 	if !p.checkNextToken(token.LPAREN) {
 		return nil
