@@ -16,6 +16,7 @@ func StartREPL() {
 	evaluator := evaluation.New()
 	// LOOP
 	for {
+		evaluator.ResetErrors()
 		fmt.Printf(">> ")
 		// get input from stdin
 		scanned := scanner.Scan()

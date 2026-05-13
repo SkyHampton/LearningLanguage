@@ -60,6 +60,10 @@ func (e *Evaluator) Errors() []string {
 	return e.errors
 }
 
+func (e *Evaluator) ResetErrors() {
+	e.errors = []string{}
+}
+
 func (e *Evaluator) EvaluateProgram(program *ast.Program) string {
 	var output bytes.Buffer
 	for _, statement := range program.Statements {
