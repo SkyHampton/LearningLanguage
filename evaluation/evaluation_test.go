@@ -293,3 +293,31 @@ func TestListLen(test *testing.T) {
 		test.Fatalf("Incorrect variable value, expected %s, got %s.", expectedOutput, output)
 	}
 }
+
+func TestAppendList(test *testing.T) {
+	input := `create int list a;
+				set a = [1, 2, 3, 4, 5];
+				append 6 to a;
+				print(a);`
+
+	l := lexer.New(input)
+	p := parser.New(l)
+	e := New()
+	program := p.ParseProgram()
+	parserErrors := p.Errors()
+	if len(parserErrors) != 0 {
+		test.Fatalf("Parser Errors were fount: %v", parserErrors)
+	}
+
+	output := e.EvaluateProgram(program)
+	errors := e.Errors()
+	expectedOutput := "[1, 2, 3, 4, 5, 6]"
+
+	if len(errors) != 0 {
+		test.Fatalf("Errors were found: %v", errors)
+	}
+
+	if output != expectedOutput {
+		test.Fatalf("Incorrect variable value, expected %s, got %s.", expectedOutput, output)
+	}
+}

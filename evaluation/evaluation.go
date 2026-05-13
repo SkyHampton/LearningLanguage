@@ -105,6 +105,11 @@ func (e *Evaluator) evaluateStatement(statement ast.Statement) string {
 		output = e.evaluateStructStatement(structStmt)
 	}
 
+	appendStmt, ok := statement.(*ast.AppendStatement)
+	if ok {
+		output = e.evaluateAppendStatement(appendStmt)
+	}
+
 	printStmt, ok := statement.(*ast.PrintStatement)
 	if ok {
 		value, list := e.evaluateExpression(printStmt.Value)
@@ -287,6 +292,31 @@ func (e *Evaluator) evaluateCountStatement(statement *ast.CountStatement) string
 	}
 
 	return ret
+}
+
+func (e *Evaluator) evaluateAppendStatement(statement *ast.AppendStatement) string {
+	listName := statement.List.Value
+	list, ok := e.listMap[listName]
+	if !ok {
+		e.errors = append(e.errors, fmt.Sprintf("List %s does not exist.", listName))
+		return ""
+	}
+
+	appendValue, _ := e.evaluateExpression(statement.Value)
+	if appendValue == (Data{}) {
+		e.errors = append(e.errors, "Invalid append data")
+		return ""
+	}
+
+	if appendValue.dataType != list.dataType {
+		e.errors = append(e.errors, "Mismatching append data type")
+		return ""
+	}
+
+	list.arr = append(list.arr, appendValue)
+	e.listMap[listName] = list
+
+	return ""
 }
 
 func (e *Evaluator) evaluateLenExpression(statement *ast.LengthExpression) Data {
