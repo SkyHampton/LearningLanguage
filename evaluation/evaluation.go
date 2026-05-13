@@ -48,15 +48,20 @@ var dataTypeToString = map[int]string{
 	FLOATTYPE:  "FLOAT",
 }
 
+func New() Evaluator {
+	eval := Evaluator{}
+	eval.errors = []string{}
+	eval.variableMap = make(map[string]Data)
+	eval.listMap = make(map[string]List)
+	return eval
+}
+
 func (e *Evaluator) Errors() []string {
 	return e.errors
 }
 
 func (e *Evaluator) EvaluateProgram(program *ast.Program) string {
 	var output bytes.Buffer
-	e.errors = []string{}
-	e.variableMap = make(map[string]Data)
-	e.listMap = make(map[string]List)
 	for _, statement := range program.Statements {
 		output.WriteString(e.evaluateStatement(statement))
 	}
@@ -263,7 +268,7 @@ func (e *Evaluator) evaluateCountStatement(statement *ast.CountStatement) string
 	byValue, _ := e.evaluateExpression(statement.By)
 	if fromValue.dataType != INTTYPE || toValue.dataType != INTTYPE || byValue.dataType != INTTYPE {
 		e.errors = append(e.errors, "Cannot use non-integer values in counting statement from, to, or by.")
-		return ""
+		return ret
 	}
 
 	counterName := statement.Counter.Value
@@ -278,6 +283,45 @@ func (e *Evaluator) evaluateCountStatement(statement *ast.CountStatement) string
 	}
 
 	return ret
+}
+
+func (e *Evaluator) evaluateLenExpression(statement *ast.LengthExpression) Data {
+	list, ok := e.listMap[statement.List.Value]
+	if !ok {
+		e.errors = append(e.errors, fmt.Sprintf("List %s does not exist.", statement.List.Value))
+	}
+
+	return Data{dataType: INTTYPE, intValue: int64(len(list.arr))}
+}
+
+func (e *Evaluator) evaluateIntLit(expression *ast.IntegerLiteral) Data {
+	return Data{dataType: INTTYPE, intValue: expression.Value}
+}
+
+func (e *Evaluator) evaluateBoolLit(expression *ast.BooleanLiteral) Data {
+	return Data{dataType: BOOLTYPE, boolValue: expression.Value}
+}
+
+func (e *Evaluator) evaluateFloatLit(expression *ast.FloatLiteral) Data {
+	return Data{dataType: FLOATTYPE, floatValue: expression.Value}
+}
+
+func (e *Evaluator) evaluateStringLit(expression *ast.StringLiteral) Data {
+	return Data{dataType: STRINGTYPE, stringValue: expression.Value}
+}
+
+func (e *Evaluator) evaluateListLit(expression *ast.ListLiteral) List {
+	expList := expression.List
+	var dataList List
+	for _, exp := range expList {
+		data, _ := e.evaluateExpression(exp)
+		if data.dataType != dataList.dataType {
+			e.errors = append(e.errors, "Mismatching list elements")
+		}
+		dataList.arr = append(dataList.arr, data)
+	}
+
+	return dataList
 }
 
 func (e *Evaluator) evaluateExpression(expression ast.Expression) (Data, List) {
@@ -309,6 +353,11 @@ func (e *Evaluator) evaluateExpression(expression ast.Expression) (Data, List) {
 		list = e.evaluateListLit(listLit)
 	}
 
+	lenExp, ok := expression.(*ast.LengthExpression)
+	if ok {
+		value = e.evaluateLenExpression(lenExp)
+	}
+
 	identifierExp, ok := expression.(*ast.Identifier)
 	if ok {
 		value, list = e.evaluateIdentifier(identifierExp)
@@ -325,36 +374,6 @@ func (e *Evaluator) evaluateExpression(expression ast.Expression) (Data, List) {
 	}
 
 	return value, list
-}
-
-func (e *Evaluator) evaluateIntLit(expression *ast.IntegerLiteral) Data {
-	return Data{dataType: INTTYPE, intValue: expression.Value}
-}
-
-func (e *Evaluator) evaluateBoolLit(expression *ast.BooleanLiteral) Data {
-	return Data{dataType: BOOLTYPE, boolValue: expression.Value}
-}
-
-func (e *Evaluator) evaluateFloatLit(expression *ast.FloatLiteral) Data {
-	return Data{dataType: FLOATTYPE, floatValue: expression.Value}
-}
-
-func (e *Evaluator) evaluateStringLit(expression *ast.StringLiteral) Data {
-	return Data{dataType: STRINGTYPE, stringValue: expression.Value}
-}
-
-func (e *Evaluator) evaluateListLit(expression *ast.ListLiteral) List {
-	expList := expression.List
-	var dataList List
-	for _, exp := range expList {
-		data, _ := e.evaluateExpression(exp)
-		if data.dataType != dataList.dataType {
-			e.errors = append(e.errors, "Mismatching list elements")
-		}
-		dataList.arr = append(dataList.arr, data)
-	}
-
-	return dataList
 }
 
 func (e *Evaluator) evaluateIdentifier(identifier *ast.Identifier) (Data, List) {

@@ -54,8 +54,10 @@ func executeProgram(in io.Reader, out io.Writer) {
 	parser := parser.New(lexer)
 	// parse program
 	program := parser.ParseProgram()
+	evaluator := evaluation.New()
 	// evaluate AST of program, get output and errors
-	output, errors := evaluation.EvaluateProgram(program)
+	output := evaluator.EvaluateProgram(program)
+	errors := evaluator.Errors()
 	parserErrors := parser.Errors()
 
 	// if there are no errors, write program output

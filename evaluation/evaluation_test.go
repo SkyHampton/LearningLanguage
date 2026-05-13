@@ -14,7 +14,7 @@ func TestCreateSetEval(test *testing.T) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	e := Evaluator{}
+	e := New()
 
 	output := e.EvaluateProgram(program)
 	errors := e.Errors()
@@ -35,7 +35,7 @@ func TestIfEval(test *testing.T) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	e := Evaluator{}
+	e := New()
 
 	output := e.EvaluateProgram(program)
 	errors := e.Errors()
@@ -56,7 +56,7 @@ func TestWhileEval(test *testing.T) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	e := Evaluator{}
+	e := New()
 
 	output := e.EvaluateProgram(program)
 	errors := e.Errors()
@@ -81,7 +81,7 @@ func TestCountEval(test *testing.T) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	e := Evaluator{}
+	e := New()
 
 	output := e.EvaluateProgram(program)
 	errors := e.Errors()
@@ -110,7 +110,7 @@ func TestStructEval(test *testing.T) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	e := Evaluator{}
+	e := New()
 
 	output := e.EvaluateProgram(program)
 	errors := e.Errors()
@@ -131,7 +131,7 @@ func TestPrefixEval(test *testing.T) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	e := Evaluator{}
+	e := New()
 
 	output := e.EvaluateProgram(program)
 	errors := e.Errors()
@@ -162,7 +162,7 @@ func TestInfixEval(test *testing.T) {
 			print(false or true);`
 	l := lexer.New(input)
 	p := parser.New(l)
-	e := Evaluator{}
+	e := New()
 	program := p.ParseProgram()
 
 	output := e.EvaluateProgram(program)
@@ -194,7 +194,7 @@ func TestDataTypes(test *testing.T) {
 				print(z);`
 	l := lexer.New(input)
 	p := parser.New(l)
-	e := Evaluator{}
+	e := New()
 	program := p.ParseProgram()
 
 	output := e.EvaluateProgram(program)
@@ -218,7 +218,7 @@ func TestListLiteral(test *testing.T) {
 
 	l := lexer.New(input)
 	p := parser.New(l)
-	e := Evaluator{}
+	e := New()
 	program := p.ParseProgram()
 	parserErrors := p.Errors()
 	if len(parserErrors) != 0 {
@@ -247,7 +247,7 @@ func TestListSetIndex(test *testing.T) {
 
 	l := lexer.New(input)
 	p := parser.New(l)
-	e := Evaluator{}
+	e := New()
 	program := p.ParseProgram()
 	parserErrors := p.Errors()
 	if len(parserErrors) != 0 {
@@ -257,6 +257,33 @@ func TestListSetIndex(test *testing.T) {
 	output := e.EvaluateProgram(program)
 	errors := e.Errors()
 	expectedOutput := "[1, 2, 30, 4, 5]30"
+
+	if len(errors) != 0 {
+		test.Fatalf("Errors were found: %v", errors)
+	}
+
+	if output != expectedOutput {
+		test.Fatalf("Incorrect variable value, expected %s, got %s.", expectedOutput, output)
+	}
+}
+
+func TestListLen(test *testing.T) {
+	input := `create int list a;
+				set a = [1, 2, 3, 4, 5];
+				print(len(a));`
+
+	l := lexer.New(input)
+	p := parser.New(l)
+	e := New()
+	program := p.ParseProgram()
+	parserErrors := p.Errors()
+	if len(parserErrors) != 0 {
+		test.Fatalf("Parser Errors were fount: %v", parserErrors)
+	}
+
+	output := e.EvaluateProgram(program)
+	errors := e.Errors()
+	expectedOutput := "5"
 
 	if len(errors) != 0 {
 		test.Fatalf("Errors were found: %v", errors)

@@ -13,6 +13,7 @@ import (
 // command line REPL program
 func StartREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
+	evaluator := evaluation.New()
 	// LOOP
 	for {
 		fmt.Printf(">> ")
@@ -29,7 +30,8 @@ func StartREPL() {
 		parser := parser.New(lexer)
 		program := parser.ParseProgram()
 		// evaluate code and get errors/output
-		output, errors := evaluation.EvaluateProgram(program)
+		output := evaluator.EvaluateProgram(program)
+		errors := evaluator.Errors()
 
 		// if parser errors exist, display them
 		if len(parser.Errors()) > 0 {

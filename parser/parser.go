@@ -80,6 +80,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FALSE, p.parseBooleanLiteral)
 	p.registerPrefix(token.TRUE, p.parseBooleanLiteral)
 	p.registerPrefix(token.LBRACKET, p.parseListLiteral)
+	p.registerPrefix(token.LEN, p.parseLengthExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.NOT, p.parsePrefixExpression)
 
@@ -170,12 +171,6 @@ func (p *Parser) parseStatement() ast.Statement {
 		return stmt
 	case token.APPEND:
 		stmt := p.parseAppendStatement()
-		if stmt == nil {
-			return nil
-		}
-		return stmt
-	case token.LEN:
-		stmt := p.parseLengthStatement()
 		if stmt == nil {
 			return nil
 		}
@@ -624,29 +619,6 @@ func (p *Parser) parseAppendStatement() *ast.AppendStatement {
 	return statement
 }
 
-func (p *Parser) parseLengthStatement() *ast.LengthStatement {
-	statement := &ast.LengthStatement{Token: p.curToken}
-
-	if !p.checkNextToken(token.LPAREN) {
-		return nil
-	}
-
-	if !p.checkNextToken(token.IDENT) {
-		return nil
-	}
-	statement.List = ast.Identifier{Token: p.curToken, Value: p.curToken.Literal, IsList: true}
-
-	if !p.checkNextToken(token.RPAREN) {
-		return nil
-	}
-
-	if !p.checkNextToken(token.SEMICOLON) {
-		return nil
-	}
-
-	return statement
-}
-
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 	msg := fmt.Sprintf("no prefix parse function for %s found", t)
 	p.errors = append(p.errors, msg)
@@ -770,6 +742,25 @@ func (p *Parser) parseListLiteral() ast.Expression {
 func (p *Parser) parseStringLiteral() ast.Expression {
 	lit := &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
 	return lit
+}
+
+func (p *Parser) parseLengthExpression() ast.Expression {
+	exp := &ast.LengthExpression{Token: p.curToken}
+
+	if !p.checkNextToken(token.LPAREN) {
+		return nil
+	}
+
+	if !p.checkNextToken(token.IDENT) {
+		return nil
+	}
+	exp.List = ast.Identifier{Token: p.curToken, Value: p.curToken.Literal, IsList: true}
+
+	if !p.checkNextToken(token.RPAREN) {
+		return nil
+	}
+
+	return exp
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {

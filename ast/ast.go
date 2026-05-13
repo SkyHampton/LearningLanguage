@@ -212,17 +212,6 @@ func (as *AppendStatement) String() string {
 	return fmt.Sprintf("Append %s to list %s", as.Value.String(), as.List.String())
 }
 
-type LengthStatement struct {
-	Token token.Token
-	List  Identifier
-}
-
-func (ls *LengthStatement) StatementNode()       {}
-func (ls *LengthStatement) TokenLiteral() string { return ls.Token.Literal }
-func (ls *LengthStatement) String() string {
-	return fmt.Sprintf("len(%s)", ls.List.String())
-}
-
 type Identifier struct {
 	Token     token.Token
 	Value     string
@@ -304,6 +293,17 @@ func (ll *ListLiteral) String() string {
 	}
 	out.WriteString("]")
 	return out.String()
+}
+
+type LengthExpression struct {
+	Token token.Token
+	List  Identifier
+}
+
+func (le *LengthExpression) ExpressionNode()      {}
+func (le *LengthExpression) TokenLiteral() string { return le.Token.Literal }
+func (le *LengthExpression) String() string {
+	return fmt.Sprintf("len(%s)", le.List.String())
 }
 
 type PrefixExpression struct {

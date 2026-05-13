@@ -987,12 +987,17 @@ func TestLists(t *testing.T) {
 		t.Errorf("appendStmt.List.Value is not myList, got %s", appendStmt.List.Value)
 	}
 	// len(myList);
-	lenStmt, ok := program.Statements[4].(*ast.LengthStatement)
+	expStmt, ok := program.Statements[4].(*ast.ExpressionStatement)
 	if !ok {
-		t.Errorf("TestLists fifth statement not LengthStatement, got %T", program.Statements[4])
+		t.Errorf("TestLists fifth statement not ExpressionStatement, got %T", program.Statements[4])
 	}
 
-	if lenStmt.List.Value != "myList" {
-		t.Errorf("lenStmt.List.Value is not myList, got %s", appendStmt.List.Value)
+	lenExp, ok := expStmt.Expression.(*ast.LengthExpression)
+	if !ok {
+		t.Errorf("expStmt.Expression not LengthExpression, got %T", expStmt.Expression)
+	}
+
+	if lenExp.List.Value != "myList" {
+		t.Errorf("lenExp.List.Value is not myList, got %s", lenExp.List.Value)
 	}
 }
