@@ -150,6 +150,9 @@ func (e *Evaluator) evaluateStatement(statement ast.Statement) string {
 			output = strings.TrimSuffix(output, ", ")
 			output += "]"
 		}
+		if printStmt.NewLine {
+			output += "\n"
+		}
 	}
 
 	return output

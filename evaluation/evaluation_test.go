@@ -3,7 +3,6 @@ package evaluation
 import (
 	"learningLanguage/lexer"
 	"learningLanguage/parser"
-	"strings"
 	"testing"
 )
 
@@ -22,7 +21,6 @@ func TestCreateSetEval(test *testing.T) {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
-	output = strings.TrimSpace(output)
 	expectedOutput := "64"
 
 	if output != expectedOutput {
@@ -31,7 +29,7 @@ func TestCreateSetEval(test *testing.T) {
 }
 
 func TestIfEval(test *testing.T) {
-	input := `if (1 > 2) begin; print("1 greater than 2"); end; else begin; print("1 not greater than 2"); end;`
+	input := `if (1 > 2) begin; println("1 greater than 2"); end; else begin; println("1 not greater than 2"); end;`
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
@@ -43,8 +41,7 @@ func TestIfEval(test *testing.T) {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
-	output = strings.TrimSpace(output)
-	expectedOutput := "1 not greater than 2"
+	expectedOutput := "1 not greater than 2\n"
 
 	if output != expectedOutput {
 		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
@@ -68,7 +65,6 @@ func TestWhileEval(test *testing.T) {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
-	output = strings.TrimSpace(output)
 	expectedOutput := "0123456789"
 
 	if output != expectedOutput {
@@ -93,7 +89,6 @@ func TestCountEval(test *testing.T) {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
-	output = strings.TrimSpace(output)
 	expectedOutput := "12345678910"
 
 	if output != expectedOutput {
@@ -118,7 +113,6 @@ func TestStructEval(test *testing.T) {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
-	output = strings.TrimSpace(output)
 	expectedOutput := "123false"
 
 	if output != expectedOutput {
@@ -139,7 +133,6 @@ func TestPrefixEval(test *testing.T) {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
-	output = strings.TrimSpace(output)
 	expectedOutput := "-123false"
 
 	if output != expectedOutput {
@@ -171,7 +164,6 @@ func TestInfixEval(test *testing.T) {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
-	output = strings.TrimSpace(output)
 	expectedOutput := "20264truetruetruefalsetruetruefalsetrue"
 
 	if output != expectedOutput {
@@ -203,7 +195,6 @@ func TestDataTypes(test *testing.T) {
 		test.Fatalf("Errors were found: %v", errors)
 	}
 
-	output = strings.TrimSpace(output)
 	expectedOutput := "123true3.14Hello World"
 
 	if output != expectedOutput {
@@ -298,7 +289,7 @@ func TestAppendList(test *testing.T) {
 	input := `create int list a;
 				set a = [1, 2, 3, 4, 5];
 				append 6 to a;
-				print(a);`
+				println(a);`
 
 	l := lexer.New(input)
 	p := parser.New(l)
@@ -311,7 +302,7 @@ func TestAppendList(test *testing.T) {
 
 	output := e.EvaluateProgram(program)
 	errors := e.Errors()
-	expectedOutput := "[1, 2, 3, 4, 5, 6]"
+	expectedOutput := "[1, 2, 3, 4, 5, 6]\n"
 
 	if len(errors) != 0 {
 		test.Fatalf("Errors were found: %v", errors)
