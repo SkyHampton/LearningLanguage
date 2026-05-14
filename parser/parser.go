@@ -695,7 +695,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 		return nil
 	}
 
-	lit.Value = value
+	lit.Value = int32(value)
 
 	return lit
 }
@@ -710,7 +710,7 @@ func (p *Parser) parseFloatLiteral() ast.Expression {
 		return nil
 	}
 
-	lit.Value = value
+	lit.Value = float32(value)
 
 	return lit
 }

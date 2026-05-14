@@ -249,7 +249,7 @@ func (i *Identifier) String() string {
 
 type IntegerLiteral struct {
 	Token token.Token
-	Value int64
+	Value int32
 }
 
 func (il *IntegerLiteral) ExpressionNode()      {}
@@ -267,7 +267,7 @@ func (bl *BooleanLiteral) String() string       { return bl.Token.Literal }
 
 type FloatLiteral struct {
 	Token token.Token
-	Value float64
+	Value float32
 }
 
 func (fl *FloatLiteral) ExpressionNode()      {}

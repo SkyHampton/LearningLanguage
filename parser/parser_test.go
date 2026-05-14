@@ -208,7 +208,7 @@ func TestIfStatement(t *testing.T) {
 	testIfSetStatement(t, els, "a", 0)
 }
 
-func testIfSetStatement(t *testing.T, stmt *ast.SetStatement, name string, value int64) {
+func testIfSetStatement(t *testing.T, stmt *ast.SetStatement, name string, value int32) {
 
 	if stmt.Name.Value != name {
 		t.Fatalf("stmt.Name.Value is not a. got=%s", stmt.Name.Value)
@@ -723,7 +723,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	prefixNegTests := []struct {
 		input        string
 		operator     string
-		integerValue int64
+		integerValue int32
 	}{
 		{"-22;", "-", 22},
 	}
@@ -798,7 +798,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	}
 }
 
-func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
+func testIntegerLiteral(t *testing.T, il ast.Expression, value int32) bool {
 	integ, ok := il.(*ast.IntegerLiteral)
 	if !ok {
 		t.Errorf("il not *ast.IntegerLiteral. got=%T", il)
@@ -843,9 +843,9 @@ func testBooleanLiteral(t *testing.T, il ast.Expression, value bool) bool {
 func TestParsingInfixExpressions(t *testing.T) {
 	infixNumTests := []struct {
 		input      string
-		leftValue  int64
+		leftValue  int32
 		operator   string
-		rightValue int64
+		rightValue int32
 	}{
 		{"2+2;", 2, "+", 2},
 		{"2-2;", 2, "-", 2},
@@ -972,7 +972,7 @@ func TestLists(t *testing.T) {
 		t.Errorf("setStmt.Value is not ListLiteral, got %T", setStmt.Value)
 	}
 
-	values := []int64{1, 2, 3}
+	values := []int32{1, 2, 3}
 	if len(values) != len(listLit.List) {
 		t.Errorf("Not enough list elements, expected %d, got %d", len(values), len(listLit.List))
 	}

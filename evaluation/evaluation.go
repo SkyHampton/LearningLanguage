@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"learningLanguage/ast"
-	"strconv"
 	"strings"
 )
 
@@ -17,10 +16,10 @@ const (
 
 type Data struct {
 	dataType    int
-	intValue    int64
+	intValue    int32
 	boolValue   bool
 	stringValue string
-	floatValue  float64
+	floatValue  float32
 }
 
 type List struct {
@@ -116,11 +115,11 @@ func (e *Evaluator) evaluateStatement(statement ast.Statement) string {
 		if len(list.arr) == 0 {
 			switch value.dataType {
 			case INTTYPE:
-				output = strconv.FormatInt(value.intValue, 10)
+				output = fmt.Sprintf("%d", value.intValue)
 			case BOOLTYPE:
-				output = strconv.FormatBool(value.boolValue)
+				output = fmt.Sprintf("%t", value.boolValue)
 			case FLOATTYPE:
-				output = strconv.FormatFloat(value.floatValue, 'f', -1, 64)
+				output = fmt.Sprintf("%.5g", value.floatValue)
 			case STRINGTYPE:
 				output = strings.Trim(value.stringValue, "\"")
 			}
@@ -328,7 +327,7 @@ func (e *Evaluator) evaluateLenExpression(statement *ast.LengthExpression) Data 
 		e.errors = append(e.errors, fmt.Sprintf("List %s does not exist.", statement.List.Value))
 	}
 
-	return Data{dataType: INTTYPE, intValue: int64(len(list.arr))}
+	return Data{dataType: INTTYPE, intValue: int32(len(list.arr))}
 }
 
 func (e *Evaluator) evaluateIntLit(expression *ast.IntegerLiteral) Data {
@@ -470,24 +469,24 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 			retValue.dataType = FLOATTYPE
 		}
 
-		var left float64
+		var left float32
 		switch leftValue.dataType {
 		case INTTYPE:
-			left += float64(leftValue.intValue)
+			left += float32(leftValue.intValue)
 		case FLOATTYPE:
 			left += leftValue.floatValue
 		}
 
-		var right float64
+		var right float32
 		switch rightValue.dataType {
 		case INTTYPE:
-			right += float64(rightValue.intValue)
+			right += float32(rightValue.intValue)
 		case FLOATTYPE:
 			right += rightValue.floatValue
 		}
 
 		if retValue.dataType != FLOATTYPE {
-			retValue.intValue = int64(left + right)
+			retValue.intValue = int32(left + right)
 		} else {
 			retValue.floatValue = left + right
 		}
@@ -497,24 +496,24 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 			retValue.dataType = FLOATTYPE
 		}
 
-		var left float64
+		var left float32
 		switch leftValue.dataType {
 		case INTTYPE:
-			left += float64(leftValue.intValue)
+			left += float32(leftValue.intValue)
 		case FLOATTYPE:
 			left += leftValue.floatValue
 		}
 
-		var right float64
+		var right float32
 		switch rightValue.dataType {
 		case INTTYPE:
-			right += float64(rightValue.intValue)
+			right += float32(rightValue.intValue)
 		case FLOATTYPE:
 			right += rightValue.floatValue
 		}
 
 		if retValue.dataType != FLOATTYPE {
-			retValue.intValue = int64(left - right)
+			retValue.intValue = int32(left - right)
 		} else {
 			retValue.floatValue = left - right
 		}
@@ -524,24 +523,24 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 			retValue.dataType = FLOATTYPE
 		}
 
-		var left float64
+		var left float32
 		switch leftValue.dataType {
 		case INTTYPE:
-			left += float64(leftValue.intValue)
+			left += float32(leftValue.intValue)
 		case FLOATTYPE:
 			left += leftValue.floatValue
 		}
 
-		var right float64
+		var right float32
 		switch rightValue.dataType {
 		case INTTYPE:
-			right += float64(rightValue.intValue)
+			right += float32(rightValue.intValue)
 		case FLOATTYPE:
 			right += rightValue.floatValue
 		}
 
 		if retValue.dataType != FLOATTYPE {
-			retValue.intValue = int64(left * right)
+			retValue.intValue = int32(left * right)
 		} else {
 			retValue.floatValue = left * right
 		}
@@ -551,24 +550,24 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 			retValue.dataType = FLOATTYPE
 		}
 
-		var left float64
+		var left float32
 		switch leftValue.dataType {
 		case INTTYPE:
-			left += float64(leftValue.intValue)
+			left += float32(leftValue.intValue)
 		case FLOATTYPE:
 			left += leftValue.floatValue
 		}
 
-		var right float64
+		var right float32
 		switch rightValue.dataType {
 		case INTTYPE:
-			right += float64(rightValue.intValue)
+			right += float32(rightValue.intValue)
 		case FLOATTYPE:
 			right += rightValue.floatValue
 		}
 
 		if retValue.dataType != FLOATTYPE {
-			retValue.intValue = int64(left / right)
+			retValue.intValue = int32(left / right)
 		} else {
 			retValue.floatValue = left / right
 		}
