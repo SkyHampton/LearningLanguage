@@ -38,13 +38,13 @@ set <identity> = <expression>;
 
 #### Valid Expressions
 The following are the valid types of expressions within the language:
-* Literals (123, true/false, 3.14, "Text")
+* Literals (123, true/false, 3.14, "Text", [1, 2, 3, 4])
 * Prefix Expressions (-4, !false)
 * Arithmetic Infix Expressions (1+1, 4-2, 10/5, 4*4)
 * Comparison Infix Expressions (>/>=, ==/!=, </<=)
 
 #### If Statements
-The language operates on if/else pairs only, no else if. If you wish to achieve if else logic, nested if statements are needed.
+LearningLanguage operates on if/else pairs only, no else if. If you wish to achieve if else logic, nested if statements are needed.
 Any statement that requires curly braces or newlines in other languages will use ```begin;``` to indicate the start of the body and ```end;``` to indicate the ending of the body.
 ```
 if (1 > 2) begin;
@@ -52,6 +52,33 @@ print("1 is less than 2");
 end;
 else begin;
 print("1 is not less than 2");
+end;
+```
+
+#### While Loops
+A while loop in LearningLanguage executes a sequence of statements so long as the condition remains true.
+```
+create int a;
+set a = 0;
+while (a < 10) begin;
+set a = a + 1;
+print(a);
+end;
+```
+
+#### Count Loops
+Similar to for loops in other languages, a count loop starts from one number and ends at another while incrementing by a specified value
+The 'by' value defaults to 1.
+To print from 1 to 10:
+```
+count i from 1 to 10 by 1 begin;
+print(i);
+end;
+
+OR
+
+count i from 1 to 10 begin;
+print(i);
 end;
 ```
 
@@ -83,11 +110,38 @@ To access attributes of a structure:
 ```
 myStruct.x;
 ```
+#### Lists
+To create a list, use the following syntax:
+```
+create int list myList;
+set myList = [1, 2, 3];
+```
 
-### Printing
+Lists in LearningLanguage use 1-based indexing
+To access an element of the list, use the following syntax:
+```
+myList[1]
+```
+
+To get the length of a list, use the following syntax:
+```
+len(myList)
+```
+
+To append to a list, use the following syntax:
+```
+append 4 to myList;
+```
+
+#### Printing
 In order to have your code output anything, you need a print statement:
 ```
 print(1+2);
 print("Hello World");
+```
+To print a newline, use:
+```
+println("");
+println(1+2);
 ```
 The parameters for printing are any expression.
