@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"learningLanguage/ast"
+	"math"
 	"strings"
 )
 
@@ -546,10 +547,6 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 		}
 
 	case "/":
-		if leftValue.dataType == FLOATTYPE || rightValue.dataType == FLOATTYPE {
-			retValue.dataType = FLOATTYPE
-		}
-
 		var left float32
 		switch leftValue.dataType {
 		case INTTYPE:
@@ -564,6 +561,12 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 			right += float32(rightValue.intValue)
 		case FLOATTYPE:
 			right += rightValue.floatValue
+		}
+
+		if math.Mod(float64(left/right), 1) == 0 {
+			retValue.dataType = INTTYPE
+		} else {
+			retValue.dataType = FLOATTYPE
 		}
 
 		if retValue.dataType != FLOATTYPE {
