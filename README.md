@@ -1,6 +1,12 @@
 # LearningLanguage
 A programming language designed to serve as a tool to bridge the gap between a students understanding of block-based languages like Scratch and complex modern lanugages like Java or C++.
 
+### Problem Statement
+There is a large gap in programming language complexity between those you would use in elementary/middle school education and high school AP courses/lower-division collegiate courses. This gap in complexity stems from two factors: the jump from block-based to text-based programming, and the wide range of features in modern languages such as Java, Python, and JavaScript. 
+
+### System Architecture
+<img src="./LLArchitecture.drawio.png">
+
 ### Requirements
 [Go Installation Instructions](https://go.dev/doc/install)
 Clone the repo to its own directory
@@ -41,7 +47,9 @@ The following are the valid types of expressions within the language:
 * Literals (123, true/false, 3.14, "Text", [1, 2, 3, 4])
 * Prefix Expressions (-4, !false)
 * Arithmetic Infix Expressions (1+1, 4-2, 10/5, 4*4)
-* Comparison Infix Expressions (>/>=, ==/!=, </<=)
+* Comparison Infix Expressions (>, >=, ==, !=, <, <=)
+* Length Expression (len(list)) (ONLY for lists)
+
 
 #### If Statements
 LearningLanguage operates on if/else pairs only, no else if. If you wish to achieve if else logic, nested if statements are needed.
