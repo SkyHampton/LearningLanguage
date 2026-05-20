@@ -54,21 +54,23 @@ func executeProgram(in io.Reader, out io.Writer) {
 	parser := parser.New(lexer)
 	// parse program
 	program := parser.ParseProgram()
+	parserErrors := parser.Errors()
+	if len(parserErrors) > 0 {
+		for _, parseError := range parserErrors {
+			fmt.Fprint(out, parseError+"\n")
+		}
+		return
+	}
+
 	evaluator := evaluation.New()
 	// evaluate AST of program, get output and errors
 	output := evaluator.EvaluateProgram(program)
 	errors := evaluator.Errors()
-	parserErrors := parser.Errors()
 
 	// if there are no errors, write program output
-	if len(errors) == 0 && len(parserErrors) == 0 {
+	if len(errors) == 0 {
 		fmt.Fprint(out, output)
 	} else {
-		if len(parserErrors) > 0 {
-			for _, parseError := range parserErrors {
-				fmt.Fprint(out, parseError+"\n")
-			}
-		}
 		// otherwise, write errors
 		for _, err := range errors {
 			fmt.Fprint(out, err+"\n")

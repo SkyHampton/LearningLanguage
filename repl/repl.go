@@ -30,23 +30,27 @@ func StartREPL() {
 		lexer := lexer.New(line)
 		parser := parser.New(lexer)
 		program := parser.ParseProgram()
-		// evaluate code and get errors/output
-		output := evaluator.EvaluateProgram(program)
-		errors := evaluator.Errors()
-
-		// if parser errors exist, display them
-		if len(parser.Errors()) > 0 {
-			for _, error := range parser.Errors() {
+		parserErrors := parser.Errors()
+		if len(parserErrors) > 0 {
+			for _, error := range parserErrors {
 				fmt.Printf("ERROR: %s\n", error)
 			}
-			// otherwise, if compilation errors exist, display them
-		} else if len(errors) > 0 {
-			for _, error := range errors {
-				fmt.Printf("ERROR: %s\n", error)
-			}
-			// otherwise, display output of code
 		} else {
-			fmt.Printf("%s\n", output)
+			// evaluate code and get errors/output
+			output := evaluator.EvaluateProgram(program)
+			errors := evaluator.Errors()
+
+			// if parser errors exist, display them
+
+			// otherwise, if compilation errors exist, display them
+			if len(errors) > 0 {
+				for _, error := range errors {
+					fmt.Printf("ERROR: %s\n", error)
+				}
+				// otherwise, display output of code
+			} else {
+				fmt.Printf("%s\n", output)
+			}
 		}
 	}
 }

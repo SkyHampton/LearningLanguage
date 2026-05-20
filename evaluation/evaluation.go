@@ -228,6 +228,8 @@ func (e *Evaluator) evaluateStructStatement(statement *ast.StructStatement) stri
 				e.errors = append(e.errors, fmt.Sprintf("Expected data type: %s. Got data type: %s",
 					attribute.DataType, dataTypeToString[value.dataType]))
 				return ""
+			} else {
+				e.variableMap[attributeName] = value
 			}
 		}
 	}
