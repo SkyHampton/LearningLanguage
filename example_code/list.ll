@@ -1,0 +1,12 @@
+create int list a;
+set a = [1, 2, 3];
+println("a: ");
+println(a);
+set a[1] = 3;
+println("a after setting a[1] to 3: ");
+println(a);
+append 4 to a;
+println("a after appending 4 to a: ");
+println(a);
+println("length of a: ");
+println(len(a));

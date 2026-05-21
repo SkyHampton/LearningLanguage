@@ -1,0 +1,11 @@
+println("Float math:");
+println("3.14 + 1.1 = ");
+println(3.14 + 1.1);
+println("5.21 + 1.1 = ");
+println(5.21 + 1.1);
+println("3.14 - 1 = ");
+println(3.14 - 1);
+println("3.14 * 2 = ");
+println(3.14 * 2);
+println("3.14 / 2 = ");
+println(3.14 / 2);

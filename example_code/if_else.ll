@@ -1,0 +1,20 @@
+create bool d; set d = false;
+if (d) begin;
+println("d is true");
+end;
+else begin;
+println("d is false");
+end;
+
+create int e; set e = 2;
+if (e == 1) begin;
+println("e equals 1");
+end;
+else begin;
+if (e == 2) begin;
+println("e equals 2");
+end;
+else begin;
+println("e is not 1 or 2");
+end;
+end;

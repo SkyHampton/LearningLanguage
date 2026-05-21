@@ -1,0 +1,16 @@
+create int list myList;
+set myList = [5, 7, 8, 3, 10, 1, 2, 4, 6, 9];
+println("List:");
+println(myList);
+create int searchItem;
+set searchItem = 8;
+create int foundIndex;
+count i from 1 to len(myList) begin;
+if (myList[i] == searchItem) begin;
+set foundIndex = i;
+end;
+end;
+print("Found ");
+print(searchItem);
+print(" at index ");
+println(foundIndex);

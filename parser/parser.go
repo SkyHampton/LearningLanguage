@@ -344,6 +344,10 @@ func (p *Parser) parseIfStatement() *ast.IfStatement {
 			p.errors = append(p.errors, "ELSE found before END;")
 			return nil
 		}
+		if p.peekToken.Type == token.EOF {
+			p.errors = append(p.errors, "EOF found before END;")
+			return nil
+		}
 	}
 
 	if !p.checkNextToken(token.END) {

@@ -1,0 +1,18 @@
+struct a (int b, int c) [b: 1, c:2];
+print("a.b: ");
+println(a.b);
+print("a.c: ");
+println(a.c);
+struct myStruct (int myInt, bool myBool, string myString, float myFloat);
+set myStruct.myInt = 123;
+print("myStruct.myInt: ");
+println(myStruct.myInt);
+set myStruct.myBool = true;
+print("myStruct.myBool: ");
+println(myStruct.myBool);
+set myStruct.myString = "Hello World";
+print("myStruct.myString: ");
+println(myStruct.myString);
+set myStruct.myFloat = 3.14;
+print("myStruct.myFloat: ");
+println(myStruct.myFloat);
