@@ -1,3 +1,4 @@
+// TODO this test file likely needs to be reworked, the tests are too complex and don't actually test well
 package parser
 
 import (
@@ -7,6 +8,7 @@ import (
 	"testing"
 )
 
+// if there are parser errors, fail the test and output them
 func checkParserErrors(test *testing.T, p *Parser) {
 	numErrors := len(p.errors)
 	if numErrors == 0 {
@@ -58,6 +60,7 @@ func TestCreateStatements(test *testing.T) {
 	}
 }
 
+// test individual create statement, used by TestCreateStatements
 func testCreateStatement(test *testing.T, statement ast.Statement, name string, dataType string) bool {
 	if statement.TokenLiteral() != "create" {
 		test.Errorf("s.TokenLiteral not 'let'. got=%q", statement.TokenLiteral())
@@ -127,6 +130,7 @@ func TestSetStatements(test *testing.T) {
 	}
 }
 
+// test individual set statement, used by TestSetStatement
 func testSetStatement(test *testing.T, statement ast.Statement, name string, explit string) bool {
 	if statement.TokenLiteral() != "set" {
 		test.Errorf("s.TokenLiteral not 'set'. got=%q", statement.TokenLiteral())
@@ -208,6 +212,7 @@ func TestIfStatement(t *testing.T) {
 	testIfSetStatement(t, els, "a", 0)
 }
 
+// probably pointless
 func testIfSetStatement(t *testing.T, stmt *ast.SetStatement, name string, value int32) {
 
 	if stmt.Name.Value != name {
@@ -798,6 +803,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	}
 }
 
+// helper function to determine if an integer literal matches a 32 bit int value
 func testIntegerLiteral(t *testing.T, il ast.Expression, value int32) bool {
 	integ, ok := il.(*ast.IntegerLiteral)
 	if !ok {
@@ -819,6 +825,7 @@ func testIntegerLiteral(t *testing.T, il ast.Expression, value int32) bool {
 	return true
 }
 
+// helper function to determine if an boolean literal matches a bool value
 func testBooleanLiteral(t *testing.T, il ast.Expression, value bool) bool {
 	boolean, ok := il.(*ast.BooleanLiteral)
 	if !ok {

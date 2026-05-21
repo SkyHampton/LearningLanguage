@@ -7,21 +7,25 @@ import (
 )
 
 // Interfaces
+// All nodes inherit these two functions from Node
 type Node interface {
-	TokenLiteral() string
-	String() string
+	TokenLiteral() string // token literal of the node
+	String() string       // string representation of a program
 }
 
+// Interface to classify nodes as statements
 type Statement interface {
 	Node
 	StatementNode()
 }
 
+// Interface to classify nodes as expressions
 type Expression interface {
 	Node
 	ExpressionNode()
 }
 
+// a program consists of a sequence of statements
 type Program struct {
 	Statements []Statement
 }
@@ -44,7 +48,7 @@ func (p *Program) String() string {
 	return out.String()
 }
 
-// Variable Creation Statement
+// Variable Creation Statements contain an identifier
 type CreateStatement struct {
 	Token token.Token
 	Name  *Identifier
@@ -56,7 +60,7 @@ func (cs *CreateStatement) String() string {
 	return cs.Name.String()
 }
 
-// Variable Set Statement
+// Variable Set Statements contain an identifier and a value assigned to it
 type SetStatement struct {
 	Token token.Token
 	Name  *Identifier
@@ -76,6 +80,7 @@ func (ss *SetStatement) String() string {
 	return out.String()
 }
 
+// Expression Statements contain any expression
 type ExpressionStatement struct {
 	Token      token.Token
 	Expression Expression
@@ -87,6 +92,7 @@ func (es *ExpressionStatement) String() string {
 	return es.Expression.String()
 }
 
+// If Statements contains a conditional expression, a sequence of statement to execute if the condition is true, and a sequence of statements to execute if it is false
 type IfStatement struct {
 	Token     token.Token
 	Condition Expression
@@ -113,6 +119,7 @@ func (is *IfStatement) String() string {
 	return out.String()
 }
 
+// While Statements contain a condition and a sequence of statements to execute so long as the condition is true
 type WhileStatement struct {
 	Token          token.Token
 	Condition      Expression
@@ -134,6 +141,7 @@ func (ws *WhileStatement) String() string {
 	return out.String()
 }
 
+// Count Statements contain a counter identifier, an expression to count from, an expression to count to, an increment expression, and a sequence of statements to execute at every increment
 type CountStatement struct {
 	Token          token.Token
 	Counter        Identifier
@@ -164,6 +172,7 @@ func (cs *CountStatement) String() string {
 	return out.String()
 }
 
+// Structure Statements contain a structure identifier, a list of attribute identifiers, and a list of values assigned to the attributes
 type StructStatement struct {
 	Token       token.Token
 	StructIdent Identifier
@@ -189,6 +198,7 @@ func (ss *StructStatement) String() string {
 	return out.String()
 }
 
+// Print Statements contain an expression to print, and a boolean to indicate if a newline should be appended at the end
 type PrintStatement struct {
 	Token   token.Token
 	Value   Expression
@@ -205,6 +215,7 @@ func (ps *PrintStatement) String() string {
 	}
 }
 
+// Append Statements contain an identifier of a list and an expression to append to the end of the list
 type AppendStatement struct {
 	Token token.Token
 	List  Identifier
@@ -217,6 +228,7 @@ func (as *AppendStatement) String() string {
 	return fmt.Sprintf("Append %s to list %s", as.Value.String(), as.List.String())
 }
 
+// Identifiers contain a value which is the name of the identifier, a data type, an attribute (myVar.a), a boolean to check if it is a list identifier, and an index expression (optional)
 type Identifier struct {
 	Token     token.Token
 	Value     string
@@ -247,6 +259,7 @@ func (i *Identifier) String() string {
 	return out.String()
 }
 
+// Integer Literals contain a 32 bit integer value
 type IntegerLiteral struct {
 	Token token.Token
 	Value int32
@@ -256,6 +269,7 @@ func (il *IntegerLiteral) ExpressionNode()      {}
 func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
 func (il *IntegerLiteral) String() string       { return il.Token.Literal }
 
+// Boolean Literals contain a boolean value
 type BooleanLiteral struct {
 	Token token.Token
 	Value bool
@@ -265,6 +279,7 @@ func (bl *BooleanLiteral) ExpressionNode()      {}
 func (bl *BooleanLiteral) TokenLiteral() string { return bl.Token.Literal }
 func (bl *BooleanLiteral) String() string       { return bl.Token.Literal }
 
+// Float Literals contain a 32 bit floating point value
 type FloatLiteral struct {
 	Token token.Token
 	Value float32
@@ -274,6 +289,7 @@ func (fl *FloatLiteral) ExpressionNode()      {}
 func (fl *FloatLiteral) TokenLiteral() string { return fl.Token.Literal }
 func (fl *FloatLiteral) String() string       { return fl.Token.Literal }
 
+// String Literals contain a string value
 type StringLiteral struct {
 	Token token.Token
 	Value string
@@ -283,6 +299,7 @@ func (sl *StringLiteral) ExpressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
 func (sl *StringLiteral) String() string       { return sl.Token.Literal }
 
+// List Literals contain a list of expressions
 type ListLiteral struct {
 	Token token.Token
 	List  []Expression
@@ -300,6 +317,7 @@ func (ll *ListLiteral) String() string {
 	return out.String()
 }
 
+// Length Expressions contain the identifier of a list
 type LengthExpression struct {
 	Token token.Token
 	List  Identifier
@@ -311,6 +329,7 @@ func (le *LengthExpression) String() string {
 	return fmt.Sprintf("len(%s)", le.List.String())
 }
 
+// Prefix Expressions contain a prefix operator (- or !) and an expression to the right of the prefix
 type PrefixExpression struct {
 	Token    token.Token // The prefix token, e.g. -
 	Operator string
@@ -330,6 +349,7 @@ func (pe *PrefixExpression) String() string {
 	return out.String()
 }
 
+// Infix Expressions contain a left expression, an operator string, and a right expression
 type InfixExpression struct {
 	Token    token.Token
 	Left     Expression
