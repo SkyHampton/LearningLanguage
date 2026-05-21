@@ -5,6 +5,7 @@ import (
 	"slices"
 )
 
+// slice of keywords, used to differentiate keywords from identifiers
 var keywords = []string{
 	"int", "bool", "create",
 	"set", "if", "else",
@@ -15,18 +16,21 @@ var keywords = []string{
 	"from", "to", "by", "println",
 	"list", "len", "append"}
 
+// lexer class, includes an input string, the current character read, and the index of the next character (head)
 type Lexer struct {
 	input string
 	head  int
 	ch    byte
 }
 
+// lexer constructor
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
 	l.readChar()
 	return l
 }
 
+// read next character and increment head pointer
 func (l *Lexer) readChar() {
 	if l.head >= len(l.input) {
 		l.ch = 0
@@ -36,33 +40,41 @@ func (l *Lexer) readChar() {
 	l.head += 1
 }
 
+// helper function, go back one character by decrementing head
 func (l *Lexer) goBack() {
 	if l.head > 0 {
 		l.head--
 	}
 }
 
+// function to ignore whitespace
 func (l *Lexer) ignoreWhitespace() {
 	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
 		l.readChar()
 	}
 }
 
+// get next token
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
 	l.ignoreWhitespace()
 
+	// if the character is a letter (a-z, A-Z), its either an identifier or a keyword
 	if isLetter(l.ch) {
 		tok = readString(l)
+		// if the character is a number, read the whole number
 	} else if isNumber(l.ch) {
 		tok = readNumber(l)
+		// non-alphanumeric characters
 	} else {
 		literal := string(l.ch)
+		// switch character and create corresponding token
 		switch l.ch {
 		case '=':
 			temp := string(l.ch)
 			l.readChar()
+			// check for ==
 			if l.ch == '=' {
 				temp += string(l.ch)
 				tok = newToken(token.EQ, temp)
@@ -73,6 +85,7 @@ func (l *Lexer) NextToken() token.Token {
 		case '>':
 			temp := string(l.ch)
 			l.readChar()
+			// check for >=
 			if l.ch == '=' {
 				temp += string(l.ch)
 				tok = newToken(token.GE, temp)
@@ -83,6 +96,7 @@ func (l *Lexer) NextToken() token.Token {
 		case '<':
 			temp := string(l.ch)
 			l.readChar()
+			// check for <=
 			if l.ch == '=' {
 				temp += string(l.ch)
 				tok = newToken(token.LE, temp)
@@ -93,6 +107,7 @@ func (l *Lexer) NextToken() token.Token {
 		case '!':
 			temp := string(l.ch)
 			l.readChar()
+			// check for !=
 			if l.ch == '=' {
 				temp += string(l.ch)
 				tok = newToken(token.NEQ, temp)
@@ -124,9 +139,11 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.COLON, literal)
 		case '.':
 			tok = newToken(token.DOT, literal)
+		// quote tokens consist of ", any number of characters, and another "
 		case '"':
 			l.readChar()
 			for l.ch != '"' {
+				// if we do not find an end quote, return an illegal token
 				if l.ch == 0 {
 					tok.Literal = "ERROR"
 					tok.Type = token.ILLEGAL
@@ -138,6 +155,7 @@ func (l *Lexer) NextToken() token.Token {
 			}
 			literal += string(l.ch)
 			tok = newToken(token.QUOTE, literal)
+		// error and EOF tokens
 		case 0:
 			tok.Literal = ""
 			tok.Type = token.EOF
@@ -151,18 +169,22 @@ func (l *Lexer) NextToken() token.Token {
 	return tok
 }
 
+// create a token object with the specified token type and literal
 func newToken(tokenType token.TokenType, literal string) token.Token {
 	return token.Token{Type: tokenType, Literal: literal}
 }
 
+// check if given character is a number
 func isNumber(char byte) bool {
 	return '0' <= char && char <= '9'
 }
 
+// check if given character is a letter
 func isLetter(char byte) bool {
 	return 'a' <= char && char <= 'z' || 'A' <= char && char <= 'Z' || char == '_'
 }
 
+// read whole number, including floating point
 func readNumber(l *Lexer) token.Token {
 	str := string(l.ch)
 	l.readChar()
@@ -174,6 +196,7 @@ func readNumber(l *Lexer) token.Token {
 	return newToken(token.NUMBER, str)
 }
 
+// read whole string of characters
 func readString(l *Lexer) token.Token {
 	var tok token.Token
 	str := string(l.ch)
@@ -184,18 +207,22 @@ func readString(l *Lexer) token.Token {
 	}
 	l.goBack()
 	isKeyword := checkKeyword(str)
+	// if its in the keyword slice, create keyword token
 	if isKeyword {
 		tok = createKeyword(str)
+		// otherwise, create ident token
 	} else {
 		tok = newToken(token.IDENT, str)
 	}
 	return tok
 }
 
+// check if string is a keyword using the slice at the top of the script
 func checkKeyword(str string) bool {
 	return slices.Contains(keywords, str)
 }
 
+// check which keyword it is and create a corresponding token, TODO replace with a map for greater efficiency
 func createKeyword(str string) token.Token {
 	var tok token.Token
 	switch str {

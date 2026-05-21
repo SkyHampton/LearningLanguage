@@ -13,6 +13,7 @@ import (
 	"testing"
 )
 
+// test all keyword lexing
 func TestLexerKeywords(t *testing.T) {
 	input := `set create if else while count from to by begin end true false struct int bool float string print println and or list append len`
 	tests := []struct {
@@ -62,6 +63,7 @@ func TestLexerKeywords(t *testing.T) {
 	}
 }
 
+// test all infix operators
 func TestLexerInfixPrefix(t *testing.T) {
 	input := `+ - / * == != > >= < <= !`
 	tests := []struct {
@@ -97,6 +99,7 @@ func TestLexerInfixPrefix(t *testing.T) {
 	}
 }
 
+// test identifiers and numbers
 func TestLexerIdentNum(t *testing.T) {
 	input := `123 3.14 test test123`
 	tests := []struct {
@@ -125,6 +128,7 @@ func TestLexerIdentNum(t *testing.T) {
 	}
 }
 
+// all other tokens
 func TestLexerMisc(t *testing.T) {
 	input := `()[];:.,"hello"`
 	tests := []struct {
