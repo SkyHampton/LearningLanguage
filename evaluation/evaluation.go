@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"learningLanguage/ast"
 	"math"
+	"slices"
 	"strings"
 )
 
@@ -37,6 +38,8 @@ type Evaluator struct {
 	variableMap map[string]Data
 	listMap     map[string]List
 }
+
+var numericDataTypes = []int{INTTYPE, FLOATTYPE}
 
 // variable type mapping to convert data type in AST node to enumerated data type
 var variableTypes = map[string]int{
@@ -80,6 +83,9 @@ func (e *Evaluator) EvaluateProgram(program *ast.Program) string {
 		output.WriteString(e.evaluateStatement(statement))
 	}
 
+	if len(e.errors) > 0 {
+		return "Errors were found, no output."
+	}
 	return output.String()
 }
 
@@ -526,8 +532,16 @@ func (e *Evaluator) evaluatePrefixExp(expression *ast.PrefixExpression) Data {
 	// evaluate - and ! prefix operators
 	switch expression.Operator {
 	case "-":
+		if value.dataType != INTTYPE && value.dataType != FLOATTYPE {
+			e.errors = append(e.errors, "Cannot perform negation on a non-numeric value")
+			return Data{}
+		}
 		value.intValue = -1 * value.intValue
 	case "!":
+		if value.dataType != BOOLTYPE {
+			e.errors = append(e.errors, "Cannot perform NOT on a non-boolean value")
+			return Data{}
+		}
 		value.boolValue = !value.boolValue
 	}
 
@@ -541,6 +555,11 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 
 	switch expression.Operator {
 	case "+":
+		// check if the values are non-numeric, if so send an error
+		if !slices.Contains(numericDataTypes, leftValue.dataType) || !slices.Contains(numericDataTypes, rightValue.dataType) {
+			e.errors = append(e.errors, "Cannot perform arithmetic operations on non-numeric values.")
+			return Data{}
+		}
 		// if either side is a float, the result will be a float
 		if leftValue.dataType == FLOATTYPE || rightValue.dataType == FLOATTYPE {
 			retValue.dataType = FLOATTYPE
@@ -572,6 +591,11 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 		}
 
 	case "-":
+		// check if the values are non-numeric, if so send an error
+		if !slices.Contains(numericDataTypes, leftValue.dataType) || !slices.Contains(numericDataTypes, rightValue.dataType) {
+			e.errors = append(e.errors, "Cannot perform arithmetic operations on non-numeric values.")
+			return Data{}
+		}
 		// if either side is a float, the result will be a float
 		if leftValue.dataType == FLOATTYPE || rightValue.dataType == FLOATTYPE {
 			retValue.dataType = FLOATTYPE
@@ -603,6 +627,11 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 		}
 
 	case "*":
+		// check if the values are non-numeric, if so send an error
+		if !slices.Contains(numericDataTypes, leftValue.dataType) || !slices.Contains(numericDataTypes, rightValue.dataType) {
+			e.errors = append(e.errors, "Cannot perform arithmetic operations on non-numeric values.")
+			return Data{}
+		}
 		// if either side is a float, the result will be a float
 		if leftValue.dataType == FLOATTYPE || rightValue.dataType == FLOATTYPE {
 			retValue.dataType = FLOATTYPE
@@ -634,6 +663,11 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 		}
 
 	case "/":
+		// check if the values are non-numeric, if so send an error
+		if !slices.Contains(numericDataTypes, leftValue.dataType) || !slices.Contains(numericDataTypes, rightValue.dataType) {
+			e.errors = append(e.errors, "Cannot perform arithmetic operations on non-numeric values.")
+			return Data{}
+		}
 		// cast left side to a float
 		var left float32
 		switch leftValue.dataType {
@@ -650,6 +684,12 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 			right += float32(rightValue.intValue)
 		case FLOATTYPE:
 			right += rightValue.floatValue
+		}
+
+		// send error if dividing by 0
+		if right == 0 {
+			e.errors = append(e.errors, "Cannot divide by 0.")
+			return Data{}
 		}
 
 		// if the result has no numbers after the decimal place, the result is an int, otherwise, it is a float
@@ -694,39 +734,39 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 	case ">":
 		retValue.dataType = BOOLTYPE
 		// if left or right is not numerical, return an error
-		if leftValue.dataType != INTTYPE && leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE && rightValue.dataType != FLOATTYPE {
-			e.errors = append(e.errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
+		if !slices.Contains(numericDataTypes, leftValue.dataType) || !slices.Contains(numericDataTypes, rightValue.dataType) {
+			e.errors = append(e.errors, "Cannot perform comparison operations on non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue > rightValue.intValue
 	case ">=":
 		retValue.dataType = BOOLTYPE
 		// if left or right is not numerical, return an error
-		if leftValue.dataType != INTTYPE && leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE && rightValue.dataType != FLOATTYPE {
-			e.errors = append(e.errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
+		if !slices.Contains(numericDataTypes, leftValue.dataType) || !slices.Contains(numericDataTypes, rightValue.dataType) {
+			e.errors = append(e.errors, "Cannot perform comparison operations on non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue >= rightValue.intValue
 	case "<":
 		retValue.dataType = BOOLTYPE
 		// if left or right is not numerical, return an error
-		if leftValue.dataType != INTTYPE && leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE && rightValue.dataType != FLOATTYPE {
-			e.errors = append(e.errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
+		if !slices.Contains(numericDataTypes, leftValue.dataType) || !slices.Contains(numericDataTypes, rightValue.dataType) {
+			e.errors = append(e.errors, "Cannot perform comparison operations on non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue < rightValue.intValue
 	case "<=":
 		retValue.dataType = BOOLTYPE
 		// if left or right is not numerical, return an error
-		if leftValue.dataType != INTTYPE && leftValue.dataType != FLOATTYPE && rightValue.dataType != INTTYPE && rightValue.dataType != FLOATTYPE {
-			e.errors = append(e.errors, "Cannot perform perform quanitative comparisons with non-numeric values.")
+		if !slices.Contains(numericDataTypes, leftValue.dataType) || !slices.Contains(numericDataTypes, rightValue.dataType) {
+			e.errors = append(e.errors, "Cannot perform comparison operations on non-numeric values.")
 			return Data{}
 		}
 		retValue.boolValue = leftValue.intValue <= rightValue.intValue
 	case "or":
 		retValue.dataType = BOOLTYPE
 		// if left or right are non-booleans, return an error
-		if leftValue.dataType != BOOLTYPE && rightValue.dataType != BOOLTYPE {
+		if leftValue.dataType != BOOLTYPE || rightValue.dataType != BOOLTYPE {
 			e.errors = append(e.errors, "Cannot perform perform logical operations with non-booleans.")
 			return Data{}
 		}
@@ -734,7 +774,7 @@ func (e *Evaluator) evaluateInfixExp(expression *ast.InfixExpression) Data {
 	case "and":
 		retValue.dataType = BOOLTYPE
 		// if left or right are non-booleans, return an error
-		if leftValue.dataType != BOOLTYPE && rightValue.dataType != BOOLTYPE {
+		if leftValue.dataType != BOOLTYPE || rightValue.dataType != BOOLTYPE {
 			e.errors = append(e.errors, "Cannot perform perform logical operations with non-booleans.")
 			return Data{}
 		}

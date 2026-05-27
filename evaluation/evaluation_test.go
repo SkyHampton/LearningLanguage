@@ -38,6 +38,39 @@ func TestCorrectCode(Test *testing.T) {
 	}
 }
 
+func TestIncorrectCode(Test *testing.T) {
+	tests := []struct {
+		input          string
+		expectedErrors bool
+		expectedOutput string
+	}{
+		{"create int x; set x = 3.14; print(x);", true, "Errors were found, no output."},
+		{"create bool x; set x = 1; print(x);", true, "Errors were found, no output."},
+		{"set x = 3.14; print(x);", true, "Errors were found, no output."},
+		{"create string x; set x = false; print(x);", true, "Errors were found, no output."},
+		{"if (1) begin; print(\"1 greater than 2\"); end; else begin; print(\"1 not greater than 2\"); end;", true, "Errors were found, no output."},
+		{"if (3.14) begin; print(\"2 greater than 1\"); end; else begin; print(\"2 not greater than 1\"); end;", true, "Errors were found, no output."},
+		{"create int x; set x = 0; while (x) begin; print(x); set x = x + 1; end;", true, "Errors were found, no output."},
+		{"count i from 1 to 3.14 begin; print(i); end;", true, "Errors were found, no output."},
+		{"count i from true to 10 by 2 begin; print(i); end;", true, "Errors were found, no output."},
+		{"struct myStruct (int x, bool y);set myStruct.x = 3.14;set myStruct.y = 1;print(myStruct.x);print(myStruct.y);", true, "Errors were found, no output."},
+		{"set myStruct.x = 3.14;print(myStruct.x);", true, "Errors were found, no output."},
+		{"print(-true + 3); print(!123);", true, "Errors were found, no output."},
+		{"print(1+true);print(2-2);print(10/5);print(8*8);", true, "Errors were found, no output."},
+		{"print(3/0);", true, "Errors were found, no output."},
+		{"print(1>true);", true, "Errors were found, no output."},
+		{"print(true and 1);", true, "Errors were found, no output."},
+		{"create int list a;set a = [1, 2, 3.14, 4, 5];print(a);", true, "Errors were found, no output."},
+		{"create int list a;set a = [1, 2, 3, 4, 5];print(a);set a[-1] = 100; print(a);", true, "Errors were found, no output."},
+		{"create int list a;set a = [1, 2, 3, 4, 5];print(a);set a[6] = 100; print(a);", true, "Errors were found, no output."},
+		{"create int list a;set a = [1, 2, 3, 4, 5];print(a); append 3.14 to a; print(a); print(len(a));", true, "Errors were found, no output."},
+	}
+
+	for _, test := range tests {
+		testEvaluation(Test, test.input, test.expectedErrors, test.expectedOutput)
+	}
+}
+
 func testEvaluation(Test *testing.T, input string, expectedErrors bool, expectedOutput string) {
 	l := lexer.New(input)
 	p := parser.New(l)
@@ -53,5 +86,6 @@ func testEvaluation(Test *testing.T, input string, expectedErrors bool, expected
 
 	if output != expectedOutput {
 		Test.Errorf("Input: %s\nExpected output %s, got %s.", input, expectedOutput, output)
+		return
 	}
 }
