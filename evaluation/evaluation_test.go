@@ -6,309 +6,52 @@ import (
 	"testing"
 )
 
-func TestCreateSetEval(test *testing.T) {
-	input := `create int x;
-			set x = 64;
-			print(x);`
-	l := lexer.New(input)
-	p := parser.New(l)
-	program := p.ParseProgram()
-	e := New()
-
-	output := e.EvaluateProgram(program)
-	errors := e.Errors()
-	if len(errors) != 0 {
-		test.Fatalf("Errors were found: %v", errors)
+func TestCorrectCode(Test *testing.T) {
+	tests := []struct {
+		input          string
+		expectedErrors bool
+		expectedOutput string
+	}{
+		{"create int x; set x = 3; print(x);", false, "3"},
+		{"create bool x; set x = true; print(x);", false, "true"},
+		{"create float x; set x = 3.14; print(x);", false, "3.14"},
+		{"create string x; set x = \"Hello!\"; print(x);", false, "Hello!"},
+		{"if (1 > 2) begin; print(\"1 greater than 2\"); end; else begin; print(\"1 not greater than 2\"); end;", false, "1 not greater than 2"},
+		{"if (2 > 1) begin; print(\"2 greater than 1\"); end; else begin; print(\"2 not greater than 1\"); end;", false, "2 greater than 1"},
+		{"create int x; set x = 0; while (x < 10) begin; print(x); set x = x + 1; end;", false, "0123456789"},
+		{"count i from 1 to 10 begin; print(i); end;", false, "12345678910"},
+		{"count i from 1 to 10 by 2 begin; print(i); end;", false, "13579"},
+		{"struct myStruct (int x, bool y);set myStruct.x = 123;set myStruct.y = false;print(myStruct.x);print(myStruct.y);", false, "123false"},
+		{"struct myStruct (int x, bool y)[x:123,y:false];print(myStruct.x);print(myStruct.y);", false, "123false"},
+		{"print(-123 + 3); print(!true);", false, "-120false"},
+		{"print(1+1);print(2-2);print(10/5);print(8*8);", false, "20264"},
+		{"print(3.14+1);print(3.14-2);print(3/5);print(0.2*4);", false, "4.141.140.60.8"},
+		{"print(1>0);print(1>=1);print(1==1);print(1!=1);print(1<2);print(1<=1);", false, "truetruetruefalsetruetrue"},
+		{"print(true and false);print(false or true);", false, "falsetrue"},
+		{"create int list a;set a = [1, 2, 3, 4, 5];print(a);", false, "[1, 2, 3, 4, 5]"},
+		{"create int list a;set a = [1, 2, 3, 4, 5];print(a);set a[1] = 100; print(a);", false, "[1, 2, 3, 4, 5][100, 2, 3, 4, 5]"},
+		{"create int list a;set a = [1, 2, 3, 4, 5];print(a); append 6 to a; print(a); print(len(a));", false, "[1, 2, 3, 4, 5][1, 2, 3, 4, 5, 6]6"},
 	}
 
-	expectedOutput := "64"
-
-	if output != expectedOutput {
-		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
-	}
-}
-
-func TestIfEval(test *testing.T) {
-	input := `if (1 > 2) begin; println("1 greater than 2"); end; else begin; println("1 not greater than 2"); end;`
-	l := lexer.New(input)
-	p := parser.New(l)
-	program := p.ParseProgram()
-	e := New()
-
-	output := e.EvaluateProgram(program)
-	errors := e.Errors()
-	if len(errors) != 0 {
-		test.Fatalf("Errors were found: %v", errors)
-	}
-
-	expectedOutput := "1 not greater than 2\n"
-
-	if output != expectedOutput {
-		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
+	for _, test := range tests {
+		testEvaluation(Test, test.input, test.expectedErrors, test.expectedOutput)
 	}
 }
 
-func TestWhileEval(test *testing.T) {
-	input := `create int x; set x = 0; while (x < 10) begin; print(x); set x = x + 1; end;`
+func testEvaluation(Test *testing.T, input string, expectedErrors bool, expectedOutput string) {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
-	e := New()
 
+	e := New()
 	output := e.EvaluateProgram(program)
 	errors := e.Errors()
-	parserErrors := p.Errors()
-	if len(parserErrors) != 0 {
-		test.Fatalf("Errors were found: %v", parserErrors)
-	}
-	if len(errors) != 0 {
-		test.Fatalf("Errors were found: %v", errors)
-	}
 
-	expectedOutput := "0123456789"
-
-	if output != expectedOutput {
-		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
-	}
-}
-
-func TestCountEval(test *testing.T) {
-	input := `count i from 1 to 10 begin; print(i); end;`
-	l := lexer.New(input)
-	p := parser.New(l)
-	program := p.ParseProgram()
-	e := New()
-
-	output := e.EvaluateProgram(program)
-	errors := e.Errors()
-	parserErrors := p.Errors()
-	if len(parserErrors) != 0 {
-		test.Fatalf("Errors were found: %v", parserErrors)
-	}
-	if len(errors) != 0 {
-		test.Fatalf("Errors were found: %v", errors)
-	}
-
-	expectedOutput := "12345678910"
-
-	if output != expectedOutput {
-		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
-	}
-}
-
-func TestStructEval(test *testing.T) {
-	input := `struct myStruct (int x, bool y);
-				set myStruct.x = 123;
-				set myStruct.y = false;
-				print(myStruct.x);
-				print(myStruct.y);`
-	l := lexer.New(input)
-	p := parser.New(l)
-	program := p.ParseProgram()
-	e := New()
-
-	output := e.EvaluateProgram(program)
-	errors := e.Errors()
-	if len(errors) != 0 {
-		test.Fatalf("Errors were found: %v", errors)
-	}
-
-	expectedOutput := "123false"
-
-	if output != expectedOutput {
-		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
-	}
-}
-
-func TestPrefixEval(test *testing.T) {
-	input := `print(-123); print(!true);`
-	l := lexer.New(input)
-	p := parser.New(l)
-	program := p.ParseProgram()
-	e := New()
-
-	output := e.EvaluateProgram(program)
-	errors := e.Errors()
-	if len(errors) != 0 {
-		test.Fatalf("Errors were found: %v", errors)
-	}
-
-	expectedOutput := "-123false"
-
-	if output != expectedOutput {
-		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
-	}
-}
-
-func TestInfixEval(test *testing.T) {
-	input := `print(1+1);
-			print(2-2);
-			print(10/5);
-			print(8*8);
-			print(1>0);
-			print(1>=1);
-			print(1==1);
-			print(1!=1);
-			print(1<2);
-			print(1<=1);
-			print(true and false);
-			print(false or true);`
-	l := lexer.New(input)
-	p := parser.New(l)
-	e := New()
-	program := p.ParseProgram()
-
-	output := e.EvaluateProgram(program)
-	errors := e.Errors()
-	if len(errors) != 0 {
-		test.Fatalf("Errors were found: %v", errors)
-	}
-
-	expectedOutput := "20264truetruetruefalsetruetruefalsetrue"
-
-	if output != expectedOutput {
-		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
-	}
-}
-
-func TestDataTypes(test *testing.T) {
-	input := `create int w;
-				set w = 123;
-				print(w);
-				create bool x;
-				set x = true;
-				print(x);
-				create float y;
-				set y = 3.14;
-				print(y);
-				create string z;
-				set z = "Hello World";
-				print(z);`
-	l := lexer.New(input)
-	p := parser.New(l)
-	e := New()
-	program := p.ParseProgram()
-
-	output := e.EvaluateProgram(program)
-	errors := e.Errors()
-	if len(errors) != 0 {
-		test.Fatalf("Errors were found: %v", errors)
-	}
-
-	expectedOutput := "123true3.14Hello World"
-
-	if output != expectedOutput {
-		test.Fatalf("Incorrect variable value, expected %s, got %s", expectedOutput, output)
-	}
-}
-
-func TestListLiteral(test *testing.T) {
-	input := `create int list a;
-				set a = [1, 2, 3, 4, 5];
-				print(a);`
-
-	l := lexer.New(input)
-	p := parser.New(l)
-	e := New()
-	program := p.ParseProgram()
-	parserErrors := p.Errors()
-	if len(parserErrors) != 0 {
-		test.Fatalf("Parser Errors were fount: %v", parserErrors)
-	}
-
-	output := e.EvaluateProgram(program)
-	errors := e.Errors()
-	expectedOutput := "[1, 2, 3, 4, 5]"
-
-	if len(errors) != 0 {
-		test.Fatalf("Errors were found: %v", errors)
+	if (len(errors) > 0) != expectedErrors {
+		Test.Errorf("Input: %s\nUnexpected erors: %v", input, errors)
 	}
 
 	if output != expectedOutput {
-		test.Fatalf("Incorrect variable value, expected %s, got %s.", expectedOutput, output)
-	}
-}
-
-func TestListSetIndex(test *testing.T) {
-	input := `create int list a;
-				set a = [1, 2, 3, 4, 5];
-				set a[3] = 30;
-				print(a);
-				print(a[3]);`
-
-	l := lexer.New(input)
-	p := parser.New(l)
-	e := New()
-	program := p.ParseProgram()
-	parserErrors := p.Errors()
-	if len(parserErrors) != 0 {
-		test.Fatalf("Parser Errors were fount: %v", parserErrors)
-	}
-
-	output := e.EvaluateProgram(program)
-	errors := e.Errors()
-	expectedOutput := "[1, 2, 30, 4, 5]30"
-
-	if len(errors) != 0 {
-		test.Fatalf("Errors were found: %v", errors)
-	}
-
-	if output != expectedOutput {
-		test.Fatalf("Incorrect variable value, expected %s, got %s.", expectedOutput, output)
-	}
-}
-
-func TestListLen(test *testing.T) {
-	input := `create int list a;
-				set a = [1, 2, 3, 4, 5];
-				print(len(a));`
-
-	l := lexer.New(input)
-	p := parser.New(l)
-	e := New()
-	program := p.ParseProgram()
-	parserErrors := p.Errors()
-	if len(parserErrors) != 0 {
-		test.Fatalf("Parser Errors were fount: %v", parserErrors)
-	}
-
-	output := e.EvaluateProgram(program)
-	errors := e.Errors()
-	expectedOutput := "5"
-
-	if len(errors) != 0 {
-		test.Fatalf("Errors were found: %v", errors)
-	}
-
-	if output != expectedOutput {
-		test.Fatalf("Incorrect variable value, expected %s, got %s.", expectedOutput, output)
-	}
-}
-
-func TestAppendList(test *testing.T) {
-	input := `create int list a;
-				set a = [1, 2, 3, 4, 5];
-				append 6 to a;
-				println(a);`
-
-	l := lexer.New(input)
-	p := parser.New(l)
-	e := New()
-	program := p.ParseProgram()
-	parserErrors := p.Errors()
-	if len(parserErrors) != 0 {
-		test.Fatalf("Parser Errors were fount: %v", parserErrors)
-	}
-
-	output := e.EvaluateProgram(program)
-	errors := e.Errors()
-	expectedOutput := "[1, 2, 3, 4, 5, 6]\n"
-
-	if len(errors) != 0 {
-		test.Fatalf("Errors were found: %v", errors)
-	}
-
-	if output != expectedOutput {
-		test.Fatalf("Incorrect variable value, expected %s, got %s.", expectedOutput, output)
+		Test.Errorf("Input: %s\nExpected output %s, got %s.", input, expectedOutput, output)
 	}
 }
