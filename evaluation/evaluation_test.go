@@ -84,6 +84,10 @@ func testEvaluation(Test *testing.T, input string, expectedErrors bool, expected
 		Test.Errorf("Input: %s\nUnexpected erors: %v", input, errors)
 	}
 
+	if len(errors) > 0 {
+		return
+	}
+
 	if output != expectedOutput {
 		Test.Errorf("Input: %s\nExpected output %s, got %s.", input, expectedOutput, output)
 		return
