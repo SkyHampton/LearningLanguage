@@ -1,4 +1,3 @@
-// TODO this test file likely needs to be reworked, the tests are too complex and don't actually test well
 package parser
 
 import (
@@ -7,6 +6,7 @@ import (
 	"testing"
 )
 
+// Helper function called by single statement tests, checks unexpected errors or expected errors
 func testErrors(test *testing.T, input string, expectedErrors bool) (*ast.Program, bool) {
 	lexer := lexer.New(input)
 	parser := New(lexer)
@@ -14,22 +14,27 @@ func testErrors(test *testing.T, input string, expectedErrors bool) (*ast.Progra
 	errors := parser.Errors()
 	numErrors := len(errors)
 
+	// if errors were found and none were expected, send a test error and return
 	if numErrors > 0 && !expectedErrors {
 		test.Errorf("Input: %s\nUnexpected erors found: %v", input, errors)
 		return nil, true
 	}
 
+	// if errors were not found but expected, send a test error and return
 	if numErrors == 0 && expectedErrors {
 		test.Error("Expected errors but encountered none.")
 		return nil, true
 	}
 
+	// if errors were found, do not try to parse the bad program
 	if numErrors > 0 {
 		return nil, true
 	}
 	return program, false
 }
 
+// Statement tests
+// Test create statements, both correct and incorrect
 func TestCreateStatements(Test *testing.T) {
 	createTests := []struct {
 		input              string
@@ -53,6 +58,7 @@ func TestCreateStatements(Test *testing.T) {
 	}
 }
 
+// Test individual create statement, called by the multiple statement version
 func testCreateStatement(test *testing.T, input string, expectedToken string, expectedErrors bool, expectedIdentifier string, expectedDataType string) {
 	program, shouldReturn := testErrors(test, input, expectedErrors)
 	if shouldReturn {
@@ -86,6 +92,7 @@ func testCreateStatement(test *testing.T, input string, expectedToken string, ex
 	}
 }
 
+// Test set statements, both correct and incorrect
 func TestSetStatements(Test *testing.T) {
 	setTests := []struct {
 		input              string
@@ -106,6 +113,7 @@ func TestSetStatements(Test *testing.T) {
 	}
 }
 
+// Test individual set statement, called by the multiple statement version
 func testSetStatement(test *testing.T, input string, expectedToken string, expectedErrors bool, expectedIdentifier string, expectedValue int32) {
 	program, shouldReturn := testErrors(test, input, expectedErrors)
 	if shouldReturn {
@@ -143,6 +151,7 @@ func testSetStatement(test *testing.T, input string, expectedToken string, expec
 	}
 }
 
+// Test if statements, both correct and incorrect
 func TestIfStatements(Test *testing.T) {
 	ifTests := []struct {
 		input          string
@@ -171,6 +180,7 @@ func TestIfStatements(Test *testing.T) {
 	}
 }
 
+// Test individual if statement, called by the multiple statement version
 func testIfStatement(test *testing.T, input string, expectedToken string, expectedErrors bool) {
 	program, shouldReturn := testErrors(test, input, expectedErrors)
 	if shouldReturn {
@@ -194,6 +204,7 @@ func testIfStatement(test *testing.T, input string, expectedToken string, expect
 	}
 }
 
+// Test while statements, both correct and incorrect
 func TestWhileStatements(Test *testing.T) {
 	whileTests := []struct {
 		input          string
@@ -215,6 +226,7 @@ func TestWhileStatements(Test *testing.T) {
 	}
 }
 
+// Test individual while statement, called by the multiple statement version
 func testWhileStatement(test *testing.T, input string, expectedToken string, expectedErrors bool) {
 	program, shouldReturn := testErrors(test, input, expectedErrors)
 	if shouldReturn {
@@ -238,6 +250,7 @@ func testWhileStatement(test *testing.T, input string, expectedToken string, exp
 	}
 }
 
+// Test count statements, both correct and incorrect
 func TestCountStatements(Test *testing.T) {
 	countTests := []struct {
 		input              string
@@ -265,6 +278,7 @@ func TestCountStatements(Test *testing.T) {
 	}
 }
 
+// Test individual count statement, called by the multiple statement version
 func testCountStatement(test *testing.T, input string, expectedToken string, expectedErrors bool, expectedIdentifier string, expectedFrom int32, expectedTo int32, expectedBy int32) {
 	program, shouldReturn := testErrors(test, input, expectedErrors)
 	if shouldReturn {
@@ -320,6 +334,7 @@ func testCountStatement(test *testing.T, input string, expectedToken string, exp
 	}
 }
 
+// Test struct statements, both correct and incorrect
 func TestStructStatements(Test *testing.T) {
 	structTests := []struct {
 		input              string
@@ -389,6 +404,7 @@ func testStructStatement(test *testing.T, input string, expectedToken string, ex
 	}
 }
 
+// Test print statements, both correct and incorrect
 func TestPrintStatements(Test *testing.T) {
 	printTests := []struct {
 		input          string
@@ -411,6 +427,7 @@ func TestPrintStatements(Test *testing.T) {
 	}
 }
 
+// Test individual print statement, called by the multiple statement version
 func testPrintStatement(test *testing.T, input string, expectedToken string, expectedErrors bool) {
 	program, shouldReturn := testErrors(test, input, expectedErrors)
 	if shouldReturn {
@@ -434,6 +451,7 @@ func testPrintStatement(test *testing.T, input string, expectedToken string, exp
 	}
 }
 
+// Test append statements, both correct and incorrect
 func TestAppendStatements(Test *testing.T) {
 	appendTests := []struct {
 		input          string
@@ -452,6 +470,7 @@ func TestAppendStatements(Test *testing.T) {
 	}
 }
 
+// Test individual append statement, called by the multiple statement version
 func testAppendStatement(test *testing.T, input string, expectedToken string, expectedErrors bool) {
 	program, shouldReturn := testErrors(test, input, expectedErrors)
 	if shouldReturn {
@@ -475,6 +494,7 @@ func testAppendStatement(test *testing.T, input string, expectedToken string, ex
 	}
 }
 
+// Expression tests
 func TestIntLiterals(Test *testing.T) {
 	intLitTests := []struct {
 		input          string

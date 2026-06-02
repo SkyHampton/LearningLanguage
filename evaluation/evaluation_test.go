@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// Test function containing all functional code with no errors
 func TestCorrectCode(Test *testing.T) {
 	tests := []struct {
 		input          string
@@ -38,6 +39,7 @@ func TestCorrectCode(Test *testing.T) {
 	}
 }
 
+// Test function containing all non-functional code with errors
 func TestIncorrectCode(Test *testing.T) {
 	tests := []struct {
 		input          string
@@ -80,14 +82,17 @@ func testEvaluation(Test *testing.T, input string, expectedErrors bool, expected
 	output := e.EvaluateProgram(program)
 	errors := e.Errors()
 
+	// if errors were found, display test error
 	if (len(errors) > 0) != expectedErrors {
 		Test.Errorf("Input: %s\nUnexpected erors: %v", input, errors)
 	}
 
+	// if errors were found, do not continue
 	if len(errors) > 0 {
 		return
 	}
 
+	// check if output matches expected output
 	if output != expectedOutput {
 		Test.Errorf("Input: %s\nExpected output %s, got %s.", input, expectedOutput, output)
 		return
